@@ -113,5 +113,7 @@ export interface LiveStats {
   ssdTemp: number | null;
   wifiTemp: number | null;
   fanRpm: number | null;
+  /** False when the platform exposes no hardware sensors at all (macOS has no hwmon/sysfs). */
+  sensorsAvailable: boolean;
   battery: { percent: number; charging: boolean; acConnected: boolean } | null;
 }

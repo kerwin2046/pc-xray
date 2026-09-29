@@ -59,6 +59,7 @@ export async function getLiveStats(): Promise<LiveStats> {
     ssdTemp,
     wifiTemp,
     fanRpm,
+    sensorsAvailable: hwmon.length > 0,
     battery: battery.hasBattery
       ? { percent: battery.percent, charging: battery.isCharging, acConnected: battery.acConnected }
       : null,

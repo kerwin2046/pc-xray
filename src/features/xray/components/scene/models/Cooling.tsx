@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { CatmullRomCurve3, ExtrudeGeometry, Path, Shape, Vector3, type Group } from "three";
+import type { LiveStats } from "@/types/hardware";
 import { PALETTE, REAL } from "../colors";
 import { PartMaterial } from "../Part";
 import { Scatter, useDispose, type Box, type Vec2 } from "../primitives";
@@ -13,6 +14,15 @@ interface CoolingProps {
   fan: Vec2;
   fanRadius: number;
   fins: { from: number; to: number; z: number };
+}
+
+/** macOS exposes no fan sensor at all, yet the fan obviously still turns. Idle-spin so the model is not frozen. */
+const FAN_IDLE_RPM = 1200;
+
+function fanRpm(live: LiveStats | null): number {
+  if (!live) return 0;
+  // On Linux hwmon exists, so a null reading genuinely means "stopped".
+  return live.fanRpm ?? (live.sensorsAvailable ? 0 : FAN_IDLE_RPM);
 }
 
 function useFanSpin(rpm: number) {
@@ -26,7 +36,7 @@ function useFanSpin(rpm: number) {
 function SchematicCooling({ plate, fan, fanRadius, fins }: CoolingProps) {
   const { live } = useScene();
   const cpuTemp = live?.cpu.packageTemp ?? null;
-  const rpm = live?.fanRpm ?? 0;
+  const rpm = fanRpm(live);
   const blades = useFanSpin(rpm);
 
   const pipe = useMemo(() => {
@@ -119,7 +129,7 @@ function blowerShape(radius: number, duct: number, hole?: number): Shape {
 function RealisticCooling({ plate, fan, fanRadius: R, fins }: CoolingProps) {
   const { live } = useScene();
   const cpuTemp = live?.cpu.packageTemp ?? null;
-  const rpm = live?.fanRpm ?? 0;
+  const rpm = fanRpm(live);
   const blades = useFanSpin(rpm);
   const duct = fan[1] - (fins.z + 0.07);
   const PIPE_SQUASH = 0.45;

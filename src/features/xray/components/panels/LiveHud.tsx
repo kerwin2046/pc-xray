@@ -72,7 +72,7 @@ export function LiveHud({ live, history, status, locale }: LiveHudProps) {
           </Metric>
           <Metric
             label={t.fan}
-            value={live.fanRpm ? `${live.fanRpm}` : t.fanStopped}
+            value={!live.sensorsAvailable ? t.unavailable : live.fanRpm ? `${live.fanRpm}` : t.fanStopped}
             sub={live.fanRpm ? "RPM" : undefined}
           />
           {live.battery && (
