@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PC·XRAY · 透视你的电脑
 
-## Getting Started
+读取本机真实硬件信息，用可交互的 3D 透视模型展示电脑内部结构：CPU 的每个核心、内存条、固态硬盘、散热、电池……点一下就能看到它是什么、参数多少、现在状态如何。
 
-First, run the development server:
+## 运行
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dev          # http://127.0.0.1:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+服务只监听 `127.0.0.1`，硬件信息不会暴露到局域网。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+其他命令：
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm snapshot [out.json]   # 导出本机硬件快照（默认 snapshot.json）
+pnpm build && pnpm start   # 生产模式
+pnpm typecheck && pnpm lint
+```
 
-## Learn More
+## 功能
 
-To learn more about Next.js, take a look at the following resources:
+- **3D 透视模型**：玻璃外壳 + 主板、SoC（P / E / LP-E 核按真实拓扑排布）、核显、内存、SSD、无线网卡、电池、热管风扇。
+- **爆炸视图**（`E`）：各层分开展示，CPU 的计算模块 / 核显 / SoC 模块会分离。
+- **温度视图**（`T`）：部件按实时温度着色（蓝 → 绿 → 红）。
+- **实时数据**：每 2 秒刷新负载、每核频率与温度、内存占用、风扇转速、电池。核心亮度随负载变化，风扇按真实转速旋转。
+- **通俗讲解**：每个部件的说明都由真实数据生成（例如大小核分工、双通道带宽计算、电池健康度）。
+- **整机诊断**：内存压力、交换空间、CPU 温度、单/双通道、电池老化、磁盘空间。
+- **快照导入 / 导出**：可以把别人的 `snapshot.json` 导入查看。导出前已去除序列号、MAC、IP、UUID。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+快捷键：`E` 爆炸视图 · `T` 温度视图 · `L` 标签 · `R` 重置视角 · `Esc` 取消选择。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 深链接
 
-## Deploy on Vercel
+```
+/?part=cpu&exploded=1&heat=1&labels=0
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`part` 可选 `board` `cpu` `gpu` `ram-0` `ssd-0` `battery` `cooling` `wifi` `display` `input`。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 结构
+
+```
+src/lib/collect/     硬件采集（systeminformation + Linux sysfs/hwmon/SPD）
+  machine.ts         静态信息，缓存 60s  → GET /api/machine
+  live.ts            实时数据            → GET /api/live
+  linux.ts           CPU 拓扑、hwmon 传感器、DDR5 SPD 解码
+src/lib/parts.ts     部件列表与讲解文案
+src/lib/insights.ts  整机诊断规则
+src/components/scene 3D 场景（React Three Fiber + drei）
+src/components/ui    HUD、工具栏、概览、详情面板
+scripts/snapshot.mts 命令行快照
+```
+
+## 平台说明
+
+- 为 Linux 优化：CPU 拓扑读取 `/sys/devices/cpu_*`，内存频率与颗粒从 `spd5118` 驱动的 SPD EEPROM 解码（无需 root）。
+- Windows / macOS 可以运行（依靠 systeminformation），但核心分类、内存细节和部分传感器会缺失或靠估算。
+- 3D 布局是按笔记本通用结构绘制的示意图，部件数量和参数是真实的，位置不是该机型的精确还原。
