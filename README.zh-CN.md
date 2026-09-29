@@ -1,5 +1,7 @@
 <div align="center">
 
+[![logo](public/xray.webp)](https://github.com/kerwin2046/pc-xray/)
+
 # PC·XRAY
 
 **透视你的电脑。**
@@ -32,6 +34,8 @@
 它相对设计容量的真实健康度。
 
 整个程序完全在你自己的机器上运行，只监听回环地址，绝不向外发送任何数据。
+
+[![PC·XRAY](public/thinkpade14.png)](https://github.com/kerwin2046/pc-xray/)
 
 ## 核心特性
 

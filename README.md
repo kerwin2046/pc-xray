@@ -1,5 +1,7 @@
 <div align="center">
 
+[![logo](public/xray.webp)](https://github.com/kerwin2046/pc-xray/)
+
 # PC·XRAY
 
 **See inside your computer.**
@@ -37,6 +39,8 @@ you get its real health against its design capacity.
 
 It runs entirely on your own machine, binds to loopback only, and never phones
 home.
+
+[![PC·XRAY](public/thinkpade14.png)](https://github.com/kerwin2046/pc-xray/)
 
 ## Highlights
 
