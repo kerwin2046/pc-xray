@@ -1,9 +1,12 @@
 "use client";
 
 import type { LiveStats, MachineInfo } from "@/lib/types";
-import { CORE_KIND_LABEL, getPartDetail, type CoreRow, type PartId } from "@/lib/parts";
+import { getPartDetail, type CoreRow, type PartId } from "@/lib/parts";
 import type { Insight, InsightLevel } from "@/lib/insights";
 import { formatGHz, formatTemp } from "@/lib/format";
+import type { Locale } from "@/lib/i18n/config";
+import { detailText } from "@/lib/i18n/detail";
+import { uiText } from "@/lib/i18n/ui";
 import { CORE_COLOR } from "@/components/scene/colors";
 
 const LEVEL_STYLE: Record<InsightLevel, string> = {
@@ -13,14 +16,16 @@ const LEVEL_STYLE: Record<InsightLevel, string> = {
   danger: "border-red-400/40 bg-red-500/15 text-red-200",
 };
 
-function CoreGrid({ cores }: { cores: CoreRow[] }) {
+function CoreGrid({ cores, locale }: { cores: CoreRow[]; locale: Locale }) {
+  const kindLabel = detailText(locale).coreKind;
+  const threads = uiText(locale).panel.threads;
   return (
     <div className="grid grid-cols-2 gap-1.5">
       {cores.map((c) => (
         <div key={`${c.kind}-${c.coreId}`} className="rounded-md bg-white/5 px-2 py-1.5">
           <div className="flex items-center justify-between text-[11px]">
             <span className="font-medium" style={{ color: CORE_COLOR[c.kind] }}>
-              {CORE_KIND_LABEL[c.kind]} #{c.coreId}
+              {kindLabel[c.kind]} #{c.coreId}
             </span>
             <span className="font-mono text-slate-400">{c.maxMHz ? formatGHz(c.maxMHz) : ""}</span>
           </div>
@@ -33,7 +38,7 @@ function CoreGrid({ cores }: { cores: CoreRow[] }) {
           <div className="mt-0.5 flex justify-between font-mono text-[10px] text-slate-400">
             <span>{c.load === null ? "—" : `${Math.round(c.load)}%`}</span>
             <span>
-              {c.threads} 线程 · {formatTemp(c.temp)}
+              {threads(c.threads)} · {formatTemp(c.temp)}
             </span>
           </div>
         </div>
@@ -45,18 +50,29 @@ function CoreGrid({ cores }: { cores: CoreRow[] }) {
 interface DetailPanelProps {
   machine: MachineInfo;
   live: LiveStats | null;
+  locale: Locale;
   selected: PartId | null;
   insights: Insight[];
   onSelect: (id: PartId | null) => void;
 }
 
-export function DetailPanel({ machine, live, selected, insights, onSelect }: DetailPanelProps) {
+export function DetailPanel({ machine, live, locale, selected, insights, onSelect }: DetailPanelProps) {
+  const t = uiText(locale).panel;
+
   if (!selected) {
+    const shortcuts: [string, string][] = [
+      ["V", t.keys.v],
+      ["E", t.keys.e],
+      ["T", t.keys.t],
+      ["L", t.keys.l],
+      ["R", t.keys.r],
+      ["Esc", t.keys.esc],
+    ];
     return (
       <div className="pointer-events-auto flex max-h-full w-[380px] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/60 shadow-2xl backdrop-blur-md">
         <div className="border-b border-white/10 p-4">
-          <h2 className="text-sm font-semibold text-white">整机诊断</h2>
-          <p className="mt-1 text-xs text-slate-400">点击 3D 模型里的部件，或左侧列表，查看它是什么、参数多少、现在状态如何。</p>
+          <h2 className="text-sm font-semibold text-white">{t.title}</h2>
+          <p className="mt-1 text-xs text-slate-400">{t.intro}</p>
         </div>
         <div className="space-y-2 overflow-y-auto p-4">
           {insights.map((ins, i) => (
@@ -71,16 +87,20 @@ export function DetailPanel({ machine, live, selected, insights, onSelect }: Det
             </button>
           ))}
           <div className="pt-2 text-[11px] leading-relaxed text-slate-500">
-            快捷键：<kbd className="font-mono">V</kbd> 真实外观 · <kbd className="font-mono">E</kbd> 爆炸视图 · <kbd className="font-mono">T</kbd> 温度视图 ·{" "}
-            <kbd className="font-mono">L</kbd> 标签 · <kbd className="font-mono">R</kbd> 重置 ·{" "}
-            <kbd className="font-mono">Esc</kbd> 取消选择
+            {t.shortcuts}{" "}
+            {shortcuts.map(([key, label], i) => (
+              <span key={key}>
+                {i > 0 && " · "}
+                <kbd className="font-mono">{key}</kbd> {label}
+              </span>
+            ))}
           </div>
         </div>
       </div>
     );
   }
 
-  const detail = getPartDetail(selected, machine, live);
+  const detail = getPartDetail(selected, machine, live, locale);
 
   return (
     <div className="pointer-events-auto flex max-h-full w-[380px] flex-col overflow-hidden rounded-xl border border-sky-400/20 bg-slate-950/70 shadow-2xl backdrop-blur-md">
@@ -93,7 +113,7 @@ export function DetailPanel({ machine, live, selected, insights, onSelect }: Det
           type="button"
           onClick={() => onSelect(null)}
           className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-white/10 hover:text-white"
-          aria-label="关闭"
+          aria-label={t.close}
         >
           ✕
         </button>
@@ -107,8 +127,8 @@ export function DetailPanel({ machine, live, selected, insights, onSelect }: Det
 
         {detail.cores && (
           <section>
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">每个核心</h3>
-            <CoreGrid cores={detail.cores} />
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t.perCore}</h3>
+            <CoreGrid cores={detail.cores} locale={locale} />
           </section>
         )}
 

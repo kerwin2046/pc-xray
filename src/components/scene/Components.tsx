@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { CatmullRomCurve3, ExtrudeGeometry, Path, Shape, Vector3, type Group } from "three";
 import type { MachineInfo, MemoryModule } from "@/lib/types";
 import { formatDisk, formatMem } from "@/lib/format";
+import { uiText } from "@/lib/i18n/ui";
 import { PALETTE, REAL } from "./colors";
 import { Decal, FONT, fitLines, inRects, makeTexture, MONO, rng, Scatter, useDispose, type Box, type Rect } from "./detail";
 import { PartMaterial } from "./Part";
@@ -546,7 +547,7 @@ export function WifiCard() {
 
 // ───────────────────────────── Battery ─────────────────────────────
 
-function batterySticker(battery: NonNullable<MachineInfo["battery"]>, percent: number) {
+function batterySticker(battery: NonNullable<MachineInfo["battery"]>, percent: number, warning: string) {
   const capacity =
     battery.capacityUnit === "mWh"
       ? `${(battery.designedCapacity / 1000).toFixed(1)} Wh`
@@ -575,7 +576,7 @@ function batterySticker(battery: NonNullable<MachineInfo["battery"]>, percent: n
     ctx.fillText(`${Math.round(percent)}%`, barX, barY + barH + 50);
     ctx.font = `400 22px ${FONT}`;
     ctx.textAlign = "right";
-    ctx.fillText("⚠ 请勿拆解、挤压或加热   Do not puncture or incinerate", W - 36, H - 30);
+    ctx.fillText(warning, W - 36, H - 30);
   });
 }
 
@@ -588,7 +589,8 @@ interface BatteryDetailProps {
 function BatteryDetail({ battery, size, percent }: BatteryDetailProps) {
   const [, h, d] = size;
   const rounded = Math.round(percent);
-  const tex = useMemo(() => batterySticker(battery, rounded), [battery, rounded]);
+  const warning = uiText(useScene().locale).scene.batteryWarning;
+  const tex = useMemo(() => batterySticker(battery, rounded, warning), [battery, rounded, warning]);
   useDispose(tex);
   return (
     <group>

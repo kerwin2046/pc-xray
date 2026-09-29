@@ -5,6 +5,7 @@ import type { Group, Mesh, Object3D } from "three";
 import type { MachineInfo } from "@/lib/types";
 import { gpuName, type PartId } from "@/lib/parts";
 import { formatDisk, formatMem } from "@/lib/format";
+import { uiText } from "@/lib/i18n/ui";
 import { Part } from "./Part";
 import { computeSocLayout, CpuPackage, type SocLayout } from "./Soc";
 import {
@@ -136,7 +137,8 @@ function useShadows(root: RefObject<Group | null>, enabled: boolean, deps: unkno
 }
 
 export function Laptop({ machine }: { machine: MachineInfo }) {
-  const { live, realistic } = useScene();
+  const { live, realistic, locale } = useScene();
+  const t = uiText(locale).scene;
   const root = useRef<Group>(null);
   const soc = useMemo(() => computeSocLayout(machine.cpu.cores), [machine.cpu.cores]);
   const fixtures = useMemo(() => boardFixtures(machine, soc), [machine, soc]);
@@ -145,13 +147,13 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
   const gpu = machine.gpus[0];
   useShadows(root, realistic, machine);
 
-  const cpuLabel = `${machine.cpu.brand.replace(/^Intel |^AMD /, "")} · ${machine.cpu.physicalCores}核${machine.cpu.threads}线程`;
+  const cpuLabel = t.cpu(machine.cpu.brand.replace(/^Intel |^AMD /, ""), machine.cpu.physicalCores, machine.cpu.threads);
 
   return (
     <group ref={root} position={[0, 0, 0.2]}>
       <Chassis w={W} h={H} d={D} />
 
-      <Part id="board" position={BOARD.pos} explode={[0, LIFT.board, 0]} label="主板" labelOffset={[1.0, 0.06, 0.45]}>
+      <Part id="board" position={BOARD.pos} explode={[0, LIFT.board, 0]} label={t.board} labelOffset={[1.0, 0.06, 0.45]}>
         <Board size={BOARD.size} fixtures={fixtures} name={machine.system.board.split(" ").slice(0, 2).join(" ")} />
       </Part>
 
@@ -192,7 +194,7 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
         </Part>
       ))}
 
-      <Part id="wifi" position={WIFI_POS} explode={[0, LIFT.cards, 0]} label="Wi-Fi / 蓝牙" labelOffset={[0, 0.08, 0.06]}>
+      <Part id="wifi" position={WIFI_POS} explode={[0, LIFT.cards, 0]} label={t.wifi} labelOffset={[0, 0.08, 0.06]}>
         <WifiCard />
       </Part>
 
@@ -200,7 +202,7 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
         id="cooling"
         position={[0, 0, 0]}
         explode={[0, LIFT.cooling, 0]}
-        label={live?.fanRpm ? `风扇 ${live.fanRpm} RPM` : "散热"}
+        label={live?.fanRpm ? t.fan(live.fanRpm) : t.cooling}
         labelOffset={[FAN[0], plateY + 0.12, FAN[1]]}
       >
         <Cooling
@@ -216,7 +218,7 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
           id="battery"
           position={BATTERY.pos}
           explode={[0, LIFT.battery, 0]}
-          label={`电池 ${Math.round(live?.battery?.percent ?? machine.battery.percent)}%`}
+          label={t.battery(Math.round(live?.battery?.percent ?? machine.battery.percent))}
           labelOffset={[0.7, 0.08, 0.1]}
         >
           <Battery size={BATTERY.size} />
@@ -227,7 +229,7 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
         id="input"
         position={[0, H, 0]}
         explode={[0, LIFT.deck, 0]}
-        label="键盘"
+        label={t.keyboard}
         labelOffset={[-1.1, 0.06, 0.5]}
         interactive={false}
       >
@@ -240,7 +242,7 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
         id="display"
         position={[0, H, -D / 2]}
         explode={LID_EXPLODE}
-        label={builtin?.resX ? `屏幕 ${builtin.resX}×${builtin.resY}` : "屏幕"}
+        label={builtin?.resX ? t.displayRes(builtin.resX, builtin.resY ?? 0) : t.display}
         labelOffset={[0, LID_H + 0.1, -0.5]}
       >
         <Lid w={W} h={LID_H} />

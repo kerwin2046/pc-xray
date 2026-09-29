@@ -4,8 +4,9 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import { MathUtils, type Group } from "three";
 import type { PhysicalCore } from "@/lib/types";
-import { CORE_KIND_LABEL } from "@/lib/parts";
 import { formatGHz, formatTemp } from "@/lib/format";
+import { detailText } from "@/lib/i18n/detail";
+import { uiText } from "@/lib/i18n/ui";
 import { CORE_COLOR, PALETTE, REAL } from "./colors";
 import { inRects, rng, Scatter, type Box } from "./detail";
 import { Label } from "./Label";
@@ -170,7 +171,8 @@ function Tile({ rect, label, children }: { rect: Rect; label?: string; children?
 }
 
 function CoreBlock({ rect, tile }: { rect: CoreRect; tile: Rect }) {
-  const { live, realistic } = useScene();
+  const { live, realistic, locale } = useScene();
+  const t = uiText(locale).scene;
   const [hover, setHover] = useState(false);
   const block = useBlockHeight();
   const { core } = rect;
@@ -198,9 +200,9 @@ function CoreBlock({ rect, tile }: { rect: CoreRect; tile: Rect }) {
         variant="tooltip"
         accent={color}
         text={[
-          `${CORE_KIND_LABEL[core.kind]} #${core.coreId}`,
-          `${core.maxMHz ? formatGHz(core.maxMHz) : "—"} · ${core.cpus.length} 线程`,
-          ...(load !== null ? [`负载 ${Math.round(load)}% · ${formatTemp(temp)}`] : []),
+          `${detailText(locale).coreKind[core.kind]} #${core.coreId}`,
+          t.coreThreads(core.maxMHz ? formatGHz(core.maxMHz) : "—", core.cpus.length),
+          ...(load !== null ? [t.coreLoad(Math.round(load), formatTemp(temp))] : []),
         ].join("\n")}
       />
     </group>
@@ -208,7 +210,8 @@ function CoreBlock({ rect, tile }: { rect: CoreRect; tile: Rect }) {
 }
 
 function GpuTile({ rect }: { rect: Rect }) {
-  const { live, realistic } = useScene();
+  const { live, realistic, locale } = useScene();
+  const t = uiText(locale).scene;
   const block = useBlockHeight();
   const blocks = useMemo(() => {
     const cols = 2;
@@ -224,8 +227,8 @@ function GpuTile({ rect }: { rect: Rect }) {
   }, [rect]);
 
   return (
-    <Part id="gpu" position={[0, 0, 0]} label="核显" labelOffset={[rect.x, 0.1, rect.z]} related={["cpu"]}>
-      <Tile rect={rect} label="图形模块">
+    <Part id="gpu" position={[0, 0, 0]} label={t.igpu} labelOffset={[rect.x, 0.1, rect.z]} related={["cpu"]}>
+      <Tile rect={rect} label={t.gpuTile}>
         {blocks.map((b, i) => (
           <mesh key={i} position={[b.x, block.y, b.z]}>
             <boxGeometry args={[b.w, block.h, b.d]} />
@@ -267,7 +270,8 @@ function SubstrateDetail({ layout }: { layout: SocLayout }) {
 }
 
 export function CpuPackage({ layout }: { layout: SocLayout }) {
-  const { live, realistic } = useScene();
+  const { live, realistic, locale } = useScene();
+  const t = uiText(locale).scene;
   const block = useBlockHeight();
   const { compute, gpu, soc, l3, cores } = layout;
 
@@ -290,7 +294,7 @@ export function CpuPackage({ layout }: { layout: SocLayout }) {
         </mesh>
       )}
       <Lift by={layout.tiled ? 0.08 : 0}>
-        <Tile rect={compute} label={layout.tiled ? "计算模块" : "处理器核心"}>
+        <Tile rect={compute} label={layout.tiled ? t.computeTile : t.cpuCores}>
           {l3 && (
             <mesh position={[l3.x - compute.x, block.y, l3.z - compute.z]}>
               <boxGeometry args={[l3.w, block.h, l3.d]} />
@@ -315,7 +319,7 @@ export function CpuPackage({ layout }: { layout: SocLayout }) {
       </Lift>
       {soc && (
         <Lift by={0.11}>
-          <Tile rect={soc} label="SoC 模块">
+          <Tile rect={soc} label={t.socTile}>
             {cores
               .filter((r) => r.core.kind === "LPE")
               .map((r) => (

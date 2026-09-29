@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MachineInfo } from "@/lib/types";
 import { listParts, type PartId } from "@/lib/parts";
 import { getInsights } from "@/lib/insights";
+import { LOCALE_COOKIE, LOCALE_TAG, type Locale } from "@/lib/i18n/config";
+import { uiText } from "@/lib/i18n/ui";
 import { SceneCanvas } from "@/components/scene/SceneCanvas";
 import type { SceneState } from "@/components/scene/SceneContext";
 import { useLiveStats } from "@/components/useLiveStats";
@@ -27,16 +29,24 @@ interface InitialView {
 
 interface XRayAppProps {
   initialMachine: MachineInfo;
+  initialLocale: Locale;
   initialView: InitialView;
 }
 
-export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
+export function XRayApp({ initialMachine, initialLocale, initialView }: XRayAppProps) {
   const [snapshot, setSnapshot] = useState<{ name: string; machine: MachineInfo } | null>(null);
   const machine = snapshot?.machine ?? initialMachine;
   const { live, history, status } = useLiveStats(snapshot === null);
 
+  const [locale, setLocale] = useState(initialLocale);
+  useEffect(() => {
+    document.documentElement.lang = LOCALE_TAG[locale];
+    document.title = uiText(locale).meta.title;
+    document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; samesite=lax`;
+  }, [locale]);
+
   const [selected, setSelected] = useState<PartId | null>(
-    () => listParts(initialMachine).find((p) => p.id === initialView.part)?.id ?? null,
+    () => listParts(initialMachine, initialLocale).find((p) => p.id === initialView.part)?.id ?? null,
   );
   const [hovered, setHovered] = useState<PartId | null>(null);
   const [exploded, setExploded] = useState(initialView.exploded);
@@ -89,13 +99,14 @@ export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
       heatMode,
       showLabels,
       realistic,
+      locale,
       select: setSelected,
       setHovered,
     }),
-    [machine, live, selected, hovered, exploded, heatMode, showLabels, realistic],
+    [machine, live, selected, hovered, exploded, heatMode, showLabels, realistic, locale],
   );
 
-  const insights = useMemo(() => getInsights(machine, live), [machine, live]);
+  const insights = useMemo(() => getInsights(machine, live, locale), [machine, live, locale]);
 
   const exportJson = () => {
     const blob = new Blob([JSON.stringify(machine, null, 2)], { type: "application/json" });
@@ -110,11 +121,11 @@ export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
   const importJson = async (file: File) => {
     try {
       const data: unknown = JSON.parse(await file.text());
-      if (!isMachineInfo(data)) throw new Error("格式不对");
+      if (!isMachineInfo(data)) throw new Error("not a PC·XRAY snapshot");
       setSelected(null);
       setSnapshot({ name: file.name, machine: data });
     } catch {
-      alert("无法读取这个文件：请选择由 PC·XRAY 导出的 JSON 快照。");
+      alert(uiText(locale).app.importError);
     }
   };
 
@@ -128,6 +139,7 @@ export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
         <div className="flex flex-col gap-4">
           <Overview
             machine={machine}
+            locale={locale}
             selected={selected}
             snapshot={snapshot?.name ?? null}
             onSelect={setSelected}
@@ -136,8 +148,10 @@ export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
         </div>
 
         <div className="flex flex-1 flex-col items-center justify-between">
-          <LiveHud live={live} history={history} status={status} />
+          <LiveHud live={live} history={history} status={status} locale={locale} />
           <Toolbar
+            locale={locale}
+            onLocaleChange={setLocale}
             exploded={exploded}
             heatMode={heatMode}
             showLabels={showLabels}
@@ -155,7 +169,14 @@ export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
         </div>
 
         <div className="flex max-h-full flex-col">
-          <DetailPanel machine={machine} live={live} selected={selected} insights={insights} onSelect={setSelected} />
+          <DetailPanel
+            machine={machine}
+            live={live}
+            locale={locale}
+            selected={selected}
+            insights={insights}
+            onSelect={setSelected}
+          />
         </div>
       </div>
     </div>

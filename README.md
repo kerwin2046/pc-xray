@@ -30,16 +30,17 @@ pnpm typecheck && pnpm lint
 - **快照导入 / 导出**：可以把别人的 `snapshot.json` 导入查看。导出前已去除序列号、MAC、IP、UUID。
 
 - **真实外观**（`V`）：PBR 材质 + 本地生成的环境反射与阴影；主板丝印与贴片元件、内存金手指与颗粒丝印、SSD/电池/网卡贴纸（文字来自真实数据）、热管风扇、键盘与屏幕都做了细节。
+- **中英双语**：默认英文，工具栏右侧 `EN / 中文` 切换，即时生效，选择记在 `pcx-locale` cookie 里。
 
 快捷键：`V` 真实外观 · `E` 爆炸视图 · `T` 温度视图 · `L` 标签 · `R` 重置视角 · `Esc` 取消选择。
 
 ### 深链接
 
 ```
-/?part=cpu&exploded=1&heat=1&labels=0&style=real
+/?part=cpu&exploded=1&heat=1&labels=0&style=real&lang=zh
 ```
 
-`part` 可选 `board` `cpu` `gpu` `ram-0` `ssd-0` `battery` `cooling` `wifi` `display` `input`。
+`part` 可选 `board` `cpu` `gpu` `ram-0` `ssd-0` `battery` `cooling` `wifi` `display` `input`。`lang` 可选 `en` `zh`，优先于 cookie。
 
 ## 结构
 
@@ -48,8 +49,9 @@ src/lib/collect/     硬件采集（systeminformation + Linux sysfs/hwmon/SPD）
   machine.ts         静态信息，缓存 60s  → GET /api/machine
   live.ts            实时数据            → GET /api/live
   linux.ts           CPU 拓扑、hwmon 传感器、DDR5 SPD 解码
-src/lib/parts.ts     部件列表与讲解文案
+src/lib/parts.ts     部件列表与讲解逻辑
 src/lib/insights.ts  整机诊断规则
+src/lib/i18n/        语言配置；ui.ts 界面文案，detail.ts 讲解与诊断文案（en / zh）
 src/components/scene 3D 场景（React Three Fiber + drei）
 src/components/ui    HUD、工具栏、概览、详情面板
 scripts/snapshot.mts 命令行快照

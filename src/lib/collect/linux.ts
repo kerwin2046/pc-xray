@@ -136,13 +136,13 @@ const MODULE_FORM: Record<number, string> = {
   2: "UDIMM",
   3: "SO-DIMM",
   4: "LRDIMM",
-  11: "板载焊接",
+  11: "Soldered",
 };
 
 /** Decodes the leading bytes of a JEDEC SPD EEPROM (DDR4 / DDR5). */
 export function decodeSpd(bytes: Uint8Array, slot: string): MemoryModule | null {
   const dramType = bytes[2];
-  const formFactor = MODULE_FORM[bytes[3] & 0x0f] ?? "未知";
+  const formFactor = MODULE_FORM[bytes[3] & 0x0f] ?? "Unknown";
 
   if (dramType === 0x12 || dramType === 0x13) {
     const tckPs = bytes[20] | (bytes[21] << 8);

@@ -3,8 +3,10 @@
 import type { MachineInfo } from "@/lib/types";
 import { gpuName, listParts, type PartId } from "@/lib/parts";
 import { formatDisk, formatMem } from "@/lib/format";
+import { LOCALE_TAG, type Locale } from "@/lib/i18n/config";
+import { uiText, type UiText } from "@/lib/i18n/ui";
 
-function partSubtitle(id: PartId, m: MachineInfo): string {
+function partSubtitle(id: PartId, m: MachineInfo, t: UiText["overview"]): string {
   if (id.startsWith("ram-")) {
     const mod = m.memory.modules[Number(id.slice(4))];
     return mod ? `${mod.type}-${mod.speedMTs ?? "?"} ${mod.sizeBytes ? formatMem(mod.sizeBytes) : ""}` : "";
@@ -15,15 +17,15 @@ function partSubtitle(id: PartId, m: MachineInfo): string {
   }
   switch (id) {
     case "cpu":
-      return `${m.cpu.physicalCores} 核 ${m.cpu.threads} 线程`;
+      return t.coresThreads(m.cpu.physicalCores, m.cpu.threads);
     case "gpu":
       return m.gpus[0] ? gpuName(m.gpus[0].model) : "—";
     case "battery":
       return m.battery ? `${(m.battery.maxCapacity / 1000).toFixed(0)} Wh` : "";
     case "display":
-      return `${m.displays.length} 块屏幕`;
+      return t.displays(m.displays.length);
     case "wifi":
-      return m.network.wifi[0] ? "Wi-Fi + 蓝牙" : "—";
+      return m.network.wifi[0] ? t.wifiBt : "—";
     default:
       return "";
   }
@@ -31,18 +33,22 @@ function partSubtitle(id: PartId, m: MachineInfo): string {
 
 interface OverviewProps {
   machine: MachineInfo;
+  locale: Locale;
   selected: PartId | null;
   snapshot: string | null;
   onSelect: (id: PartId) => void;
   onExitSnapshot: () => void;
 }
 
-export function Overview({ machine, selected, snapshot, onSelect, onExitSnapshot }: OverviewProps) {
+export function Overview({ machine, locale, selected, snapshot, onSelect, onExitSnapshot }: OverviewProps) {
+  const t = uiText(locale).overview;
   return (
     <div className="pointer-events-auto w-72 rounded-xl border border-white/10 bg-slate-950/60 p-4 shadow-2xl backdrop-blur-md">
       <div className="flex items-baseline justify-between">
         <span className="font-mono text-xs font-bold tracking-[0.3em] text-sky-400">PC·XRAY</span>
-        <span className="text-[10px] text-slate-500">{new Date(machine.collectedAt).toLocaleString("zh-CN")}</span>
+        <span className="text-[10px] text-slate-500">
+          {new Date(machine.collectedAt).toLocaleString(LOCALE_TAG[locale])}
+        </span>
       </div>
       <h1 className="mt-2 text-lg font-semibold leading-tight text-white">
         {machine.system.family || machine.system.model}
@@ -54,15 +60,15 @@ export function Overview({ machine, selected, snapshot, onSelect, onExitSnapshot
 
       {snapshot && (
         <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-200 ring-1 ring-amber-400/30">
-          <span className="truncate">快照：{snapshot}</span>
+          <span className="truncate">{t.snapshot(snapshot)}</span>
           <button type="button" onClick={onExitSnapshot} className="ml-2 shrink-0 underline-offset-2 hover:underline">
-            返回本机
+            {t.backToLive}
           </button>
         </div>
       )}
 
       <ul className="mt-3 space-y-0.5">
-        {listParts(machine).map((p) => (
+        {listParts(machine, locale).map((p) => (
           <li key={p.id}>
             <button
               type="button"
@@ -71,8 +77,8 @@ export function Overview({ machine, selected, snapshot, onSelect, onExitSnapshot
                 selected === p.id ? "bg-sky-500/20 text-sky-100" : "text-slate-300 hover:bg-white/5"
               }`}
             >
-              <span>{p.name}</span>
-              <span className="truncate pl-2 text-slate-500">{partSubtitle(p.id, machine)}</span>
+              <span className="shrink-0">{p.name}</span>
+              <span className="truncate pl-2 text-slate-500">{partSubtitle(p.id, machine, t)}</span>
             </button>
           </li>
         ))}

@@ -286,7 +286,13 @@ function drawDesktop(ctx: CanvasRenderingContext2D, W: number, H: number, m: Mac
   ctx.font = `600 22px ${MONO}`;
   ctx.fillText("1  2  3  4", 20, 28);
   ctx.textAlign = "center";
-  ctx.fillText(new Date(m.collectedAt).toLocaleString("zh-CN", { hour12: false }).slice(0, -3), W / 2, 28);
+  const at = new Date(m.collectedAt);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  ctx.fillText(
+    `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${pad(at.getHours())}:${pad(at.getMinutes())}`,
+    W / 2,
+    28,
+  );
   ctx.textAlign = "left";
 
   const x0 = W * 0.2;

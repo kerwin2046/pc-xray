@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
+import { LOCALE_TAG } from "@/lib/i18n/config";
+import { requestLocale } from "@/lib/i18n/server";
+import { uiText } from "@/lib/i18n/ui";
 import "./globals.css";
 
+const { meta } = uiText("en");
+
 export const metadata: Metadata = {
-  title: "PC·XRAY · 透视你的电脑",
-  description: "读取本机真实硬件信息，用可交互的 3D 透视模型展示电脑内部结构。",
+  title: meta.title,
+  description: meta.description,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await requestLocale();
   return (
-    <html lang="zh-CN" className="h-full antialiased">
+    <html lang={LOCALE_TAG[locale]} className="h-full antialiased">
       <body className="min-h-full">{children}</body>
     </html>
   );

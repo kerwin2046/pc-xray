@@ -2,6 +2,8 @@
 
 import type { LiveStats } from "@/lib/types";
 import { formatMem, formatTemp } from "@/lib/format";
+import type { Locale } from "@/lib/i18n/config";
+import { uiText } from "@/lib/i18n/ui";
 import type { LiveStatus } from "@/components/useLiveStats";
 
 function Sparkline({ values }: { values: number[] }) {
@@ -32,28 +34,35 @@ function Metric({ label, value, sub, children }: { label: string; value: string;
   );
 }
 
-const STATUS_TEXT: Record<LiveStatus, { text: string; dot: string }> = {
-  connecting: { text: "连接中", dot: "bg-slate-400" },
-  live: { text: "实时", dot: "bg-emerald-400 animate-pulse" },
-  error: { text: "连接断开", dot: "bg-red-500" },
-  off: { text: "快照", dot: "bg-amber-400" },
+const STATUS_DOT: Record<LiveStatus, string> = {
+  connecting: "bg-slate-400",
+  live: "bg-emerald-400 animate-pulse",
+  error: "bg-red-500",
+  off: "bg-amber-400",
 };
 
-export function LiveHud({ live, history, status }: { live: LiveStats | null; history: number[]; status: LiveStatus }) {
-  const s = STATUS_TEXT[status];
+interface LiveHudProps {
+  live: LiveStats | null;
+  history: number[];
+  status: LiveStatus;
+  locale: Locale;
+}
+
+export function LiveHud({ live, history, status, locale }: LiveHudProps) {
+  const t = uiText(locale).hud;
   const memPct = live ? (live.memory.usedBytes / live.memory.totalBytes) * 100 : 0;
   return (
     <div className="pointer-events-auto flex items-stretch divide-x divide-white/10 rounded-xl border border-white/10 bg-slate-950/60 shadow-2xl backdrop-blur-md">
       <div className="flex items-center gap-2 px-4 text-xs text-slate-300">
-        <span className={`h-2 w-2 rounded-full ${s.dot}`} />
-        {s.text}
+        <span className={`h-2 w-2 rounded-full ${STATUS_DOT[status]}`} />
+        {t.status[status]}
       </div>
       {live ? (
         <>
           <Metric label="CPU" value={`${Math.round(live.cpu.load)}%`} sub={formatTemp(live.cpu.packageTemp)}>
             <Sparkline values={history} />
           </Metric>
-          <Metric label="内存" value={formatMem(live.memory.usedBytes)} sub={`/ ${formatMem(live.memory.totalBytes)}`}>
+          <Metric label={t.memory} value={formatMem(live.memory.usedBytes)} sub={`/ ${formatMem(live.memory.totalBytes)}`}>
             <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/10">
               <div
                 className={`h-full rounded-full ${memPct > 85 ? "bg-amber-400" : "bg-sky-400"}`}
@@ -61,19 +70,21 @@ export function LiveHud({ live, history, status }: { live: LiveStats | null; his
               />
             </div>
           </Metric>
-          <Metric label="风扇" value={live.fanRpm ? `${live.fanRpm}` : "停转"} sub={live.fanRpm ? "RPM" : undefined} />
+          <Metric
+            label={t.fan}
+            value={live.fanRpm ? `${live.fanRpm}` : t.fanStopped}
+            sub={live.fanRpm ? "RPM" : undefined}
+          />
           {live.battery && (
             <Metric
-              label="电池"
+              label={t.battery}
               value={`${Math.round(live.battery.percent)}%`}
-              sub={live.battery.charging ? "充电中" : live.battery.acConnected ? "接电源" : "放电"}
+              sub={live.battery.charging ? t.charging : live.battery.acConnected ? t.ac : t.discharging}
             />
           )}
         </>
       ) : (
-        <div className="px-4 py-3 text-xs text-slate-400">
-          {status === "off" ? "正在查看导入的快照，没有实时数据" : "等待数据…"}
-        </div>
+        <div className="px-4 py-3 text-xs text-slate-400">{status === "off" ? t.snapshotNoLive : t.waiting}</div>
       )}
     </div>
   );
