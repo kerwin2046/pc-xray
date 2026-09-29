@@ -6,7 +6,7 @@ import { Edges } from "@react-three/drei";
 import { MathUtils, type Group } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import type { MachineInfo } from "@/types/hardware";
-import { gpuName } from "@/lib/hardware/parts";
+import { gpuName, primaryGpu } from "@/lib/hardware/parts";
 import { formatDisk, formatMem } from "@/lib/format";
 import { PALETTE, REAL } from "../colors";
 import { Decal, FONT, makeTexture, MONO, Scatter, useDispose, type Box } from "../primitives";
@@ -311,7 +311,7 @@ function drawDesktop(ctx: CanvasRenderingContext2D, W: number, H: number, m: Mac
     ["Host", m.system.family || m.system.model],
     ["Kernel", m.os.kernel],
     ["CPU", `${m.cpu.brand} (${m.cpu.threads})`],
-    ["GPU", m.gpus[0] ? gpuName(m.gpus[0].model) : "—"],
+    ["GPU", primaryGpu(m) ? gpuName(primaryGpu(m)!.model) : "—"],
     ["Memory", formatMem(m.memory.totalBytes)],
     ["Disk", m.disks.map((d) => formatDisk(d.sizeBytes)).join(" + ") || "—"],
     ["Display", builtin?.resX ? `${builtin.resX}×${builtin.resY}` : "—"],

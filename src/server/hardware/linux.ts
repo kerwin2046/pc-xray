@@ -1,6 +1,7 @@
 import { open, readdir, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import type { CoreKind, MemoryModule, PhysicalCore } from "@/types/hardware";
+import type { HardwareCollector, HwmonDevice } from "./collector";
 
 async function readText(file: string): Promise<string | null> {
   try {
@@ -68,12 +69,6 @@ export async function readCpuTopology(): Promise<PhysicalCore[]> {
   return [...groups.values()]
     .map((c) => ({ ...c, cpus: c.cpus.sort((a, b) => a - b) }))
     .sort((a, b) => order[a.kind] - order[b.kind] || b.maxMHz - a.maxMHz || a.coreId - b.coreId);
-}
-
-export interface HwmonDevice {
-  name: string;
-  temps: { label: string; celsius: number }[];
-  fans: number[];
 }
 
 export async function readHwmon(): Promise<HwmonDevice[]> {

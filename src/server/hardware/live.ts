@@ -1,6 +1,6 @@
 import si from "systeminformation";
 import type { LiveStats } from "@/types/hardware";
-import { readHwmon, readModuleTemps } from "./linux";
+import { readHwmon, readModuleTemps } from "./platform";
 
 export async function getLiveStats(): Promise<LiveStats> {
   const [load, mem, speed, battery, hwmon, moduleTemps] = await Promise.all([
