@@ -352,7 +352,14 @@ function coolingDetail(t: DetailText, live: LiveStats | null): PartDetail {
         title: t.common.live,
         rows: live
           ? [
-              { label: c.fan, value: live.fanRpm ? `${live.fanRpm} RPM` : t.common.fanStopped },
+              {
+                label: c.fan,
+                value: !live.sensorsAvailable
+                  ? t.common.unavailable
+                  : live.fanRpm
+                    ? `${live.fanRpm} RPM`
+                    : t.common.fanStopped,
+              },
               {
                 label: c.cpuPackage,
                 value: formatTemp(live.cpu.packageTemp),

@@ -42,6 +42,7 @@ const en = {
     notDetected: "Not detected",
     unknown: "Unknown",
     fanStopped: "Stopped",
+    unavailable: "N/A",
   },
 
   cpu: {
@@ -278,6 +279,7 @@ const zh: DetailText = {
     notDetected: "未检测到",
     unknown: "未知",
     fanStopped: "停转",
+    unavailable: "不可用",
   },
 
   cpu: {
