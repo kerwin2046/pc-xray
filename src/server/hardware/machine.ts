@@ -144,13 +144,16 @@ async function collect(): Promise<MachineInfo> {
       resY: d.currentResY ?? d.resolutionY,
       refreshHz: d.currentRefreshRate ?? null,
     })),
-    disks: (data.diskLayout as si.Systeminformation.DiskLayoutData[]).map((d) => ({
-      name: d.name,
-      type: d.type,
-      interface: d.interfaceType,
-      sizeBytes: d.size,
-      firmware: d.firmwareRevision,
-    })),
+    disks: (data.diskLayout as si.Systeminformation.DiskLayoutData[])
+      // macOS reports mounted disk images (DMGs, simulator volumes) here; they are not physical drives.
+      .filter((d) => d.type !== "Disk Image")
+      .map((d) => ({
+        name: d.name,
+        type: d.type,
+        interface: d.interfaceType,
+        sizeBytes: d.size,
+        firmware: d.firmwareRevision,
+      })),
     volumes: [...volumes.values()],
     battery: battery.hasBattery
       ? {
