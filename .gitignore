@@ -42,3 +42,5 @@ next-env.d.ts
 
 # hardware snapshots
 snapshot*.json
+
+.adnify/
