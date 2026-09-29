@@ -6,6 +6,7 @@ const GIB = 1024 ** 3;
 const COMMON_MODULE_GIB = [2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128];
 const FEATURE_FLAGS = ["ht", "vmx", "svm", "aes", "sha_ni", "avx2", "avx_vnni", "avx512f", "fma"];
 const VIRTUAL_IFACE = /^(lo|veth|br-|docker|virbr|tun|tap|vnet|Meta|utun|zt)/;
+const DISK_IMAGE_TYPE = "Disk Image";
 
 /** Usable RAM is below the installed amount (firmware / iGPU reservations), so round up. */
 function estimateModuleBytes(totalBytes: number, count: number): number {
@@ -79,10 +80,17 @@ async function collect(): Promise<MachineInfo> {
   const baseboard = data.baseboard as si.Systeminformation.BaseboardData;
   const bios = data.bios as si.Systeminformation.BiosData;
   const os = data.osInfo as si.Systeminformation.OsData;
+  // macOS mounts disk images (app DMGs, simulator volumes) as ordinary filesystems.
+  // They are real mounts but not physical storage, so keep them out of `volumes` too —
+  // otherwise the insights panel warns about disks that do not exist.
+  const diskImageDevices = (data.diskLayout as si.Systeminformation.DiskLayoutData[])
+    .filter((d) => d.type === DISK_IMAGE_TYPE && d.device)
+    .map((d) => `/dev/${d.device}`);
 
   const volumes = new Map<string, MachineInfo["volumes"][number]>();
   for (const fs of data.fsSize as si.Systeminformation.FsSizeData[]) {
     if (!fs.fs.startsWith("/dev/")) continue;
+    if (diskImageDevices.some((dev) => fs.fs === dev || fs.fs.startsWith(`${dev}s`))) continue;
     const existing = volumes.get(fs.fs);
     if (existing) existing.mounts.push(fs.mount);
     else
@@ -146,7 +154,7 @@ async function collect(): Promise<MachineInfo> {
     })),
     disks: (data.diskLayout as si.Systeminformation.DiskLayoutData[])
       // macOS reports mounted disk images (DMGs, simulator volumes) here; they are not physical drives.
-      .filter((d) => d.type !== "Disk Image")
+      .filter((d) => d.type !== DISK_IMAGE_TYPE)
       .map((d) => ({
         name: d.name,
         type: d.type,
