@@ -3,7 +3,7 @@
 import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import type { Group, Mesh, Object3D } from "three";
 import type { MachineInfo } from "@/types/hardware";
-import { gpuName, type PartId } from "@/lib/hardware/parts";
+import { gpuName, discreteGpu, type PartId } from "@/lib/hardware/parts";
 import { formatDisk, formatMem } from "@/lib/format";
 import { uiText } from "@/i18n/ui";
 import { Part } from "../Part";
@@ -65,6 +65,8 @@ export function getFocus(id: PartId, exploded: boolean): Focus {
       return { target: add(SOC_POS, lift(LIFT.board), k), distance: 1.3 };
     case "gpu":
       return { target: add(SOC_POS, lift(LIFT.board + 0.14), k), distance: 1.1 };
+    case "gpu-discrete":
+      return { target: add([0.2, 0.06, -0.85], lift(LIFT.cards), k), distance: 1.6 };
     case "wifi":
       return { target: add(WIFI_POS, lift(LIFT.cards), k), distance: 1.3 };
     case "cooling":
@@ -136,7 +138,7 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
   const fixtures = useMemo(() => boardFixtures(machine, soc), [machine, soc]);
   const plateY = SOC_POS[1] + 0.045;
   const builtin = machine.displays.find((d) => d.builtin);
-  const gpu = machine.gpus[0];
+  const gpu = discreteGpu(machine);
   useShadows(root, realistic, machine);
 
   const cpuLabel = t.cpu(machine.cpu.brand.replace(/^Intel |^AMD /, ""), machine.cpu.physicalCores, machine.cpu.threads);
@@ -240,8 +242,8 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
         <Lid w={W} h={LID_H} />
       </Part>
 
-      {gpu && !gpu.integrated && (
-        <Part id="gpu" position={[0.2, 0.06, -0.85]} explode={[0, LIFT.cards, 0]} label={gpuName(gpu.model)}>
+      {gpu && (
+        <Part id="gpu-discrete" position={[0.2, 0.06, -0.85]} explode={[0, LIFT.cards, 0]} label={gpuName(gpu.model)}>
           <mesh>
             <boxGeometry args={[0.35, 0.02, 0.3]} />
             <meshStandardMaterial color="#111827" />

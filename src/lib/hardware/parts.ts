@@ -7,6 +7,7 @@ export type PartId =
   | "board"
   | "cpu"
   | "gpu"
+  | "gpu-discrete"
   | `ram-${number}`
   | `ssd-${number}`
   | "battery"
@@ -47,11 +48,29 @@ export function gpuName(model: string): string {
   return /\[(.+)\]/.exec(model)?.[1] ?? model;
 }
 
+type Gpu = MachineInfo["gpus"][number];
+
+/** The integrated GPU (in the CPU package), if the machine has one. */
+export function integratedGpu(m: MachineInfo): Gpu | undefined {
+  return m.gpus.find((g) => g.integrated);
+}
+
+/** The discrete GPU (separate card), if the machine has one. */
+export function discreteGpu(m: MachineInfo): Gpu | undefined {
+  return m.gpus.find((g) => !g.integrated);
+}
+
+/** The GPU to headline in summaries: discrete when present, else integrated. */
+export function primaryGpu(m: MachineInfo): Gpu | undefined {
+  return discreteGpu(m) ?? integratedGpu(m);
+}
+
 export function listParts(machine: MachineInfo, locale: Locale): { id: PartId; name: string }[] {
   const n = detailText(locale).parts;
   return [
     { id: "cpu", name: n.cpu },
     { id: "gpu", name: n.gpu },
+    ...(discreteGpu(machine) ? [{ id: "gpu-discrete" as PartId, name: n.gpuDiscrete }] : []),
     ...machine.memory.modules.map((_, i) => ({ id: `ram-${i}` as PartId, name: n.ram(i + 1) })),
     ...machine.disks.map((_, i) => ({ id: `ssd-${i}` as PartId, name: n.ssd })),
     { id: "cooling", name: n.cooling },
@@ -159,45 +178,46 @@ function cpuDetail(t: DetailText, m: MachineInfo, live: LiveStats | null): PartD
   return { title: c.title, subtitle: cpu.brand, summary, sections, cores };
 }
 
-function gpuDetail(t: DetailText, m: MachineInfo, live: LiveStats | null): PartDetail {
+function gpuDetail(t: DetailText, m: MachineInfo, live: LiveStats | null, gpu: MachineInfo["gpus"][number] | undefined): PartDetail {
   const g = t.gpu;
-  const gpu = m.gpus[0];
   const name = gpu ? gpuName(gpu.model) : t.common.notDetected;
   const summary = [g.intro];
   if (gpu?.integrated) {
     summary.push(g.integrated);
     if (m.memory.channels === 2) summary.push(g.dualChannel);
     summary.push(g.usage);
+  } else if (gpu) {
+    summary.push(g.discrete);
   }
-  return {
-    title: g.title,
-    subtitle: name,
-    summary,
-    sections: [
-      {
-        title: t.common.specs,
-        rows: [
-          { label: t.common.model, value: name },
-          { label: t.common.vendor, value: gpu?.vendor ?? "—" },
-          { label: t.common.type, value: gpu?.integrated ? g.integratedType : g.discreteType },
-          {
-            label: g.vram,
-            value: gpu?.integrated ? g.sharedVram : gpu?.vramMB ? `${gpu.vramMB} MB` : "—",
-          },
-          ...(live
-            ? [{ label: t.common.temp, value: formatTemp(live.gpuTemp), hint: tempHint(t, live.gpuTemp, 70, 90) }]
-            : []),
-        ],
-      },
-      {
-        title: g.displays,
-        rows: m.displays.map((d) => ({
-          label: d.builtin ? g.builtin : d.connection,
-          value: d.resX ? `${d.resX}×${d.resY} @ ${d.refreshHz ?? "?"}Hz` : "—",
-        })),
-      },
-    ],
-  };
+  // A discrete GPU on a laptop usually drives the panel through the iGPU
+  // (muxless / Optimus), so only the integrated GPU lists the displays.
+  const sections: DetailSection[] = [
+    {
+      title: t.common.specs,
+      rows: [
+        { label: t.common.model, value: name },
+        { label: t.common.vendor, value: gpu?.vendor ?? "—" },
+        { label: t.common.type, value: gpu?.integrated ? g.integratedType : g.discreteType },
+        {
+          label: g.vram,
+          value: gpu?.integrated ? g.sharedVram : gpu?.vramMB ? `${gpu.vramMB} MB` : "—",
+        },
+        ...(live
+          ? [{ label: t.common.temp, value: formatTemp(live.gpuTemp), hint: tempHint(t, live.gpuTemp, 70, 90) }]
+          : []),
+      ],
+    },
+  ];
+  if (gpu?.integrated) {
+    sections.push({
+      title: g.displays,
+      rows: m.displays.map((d) => ({
+        label: d.builtin ? g.builtin : d.connection,
+        value: d.resX ? `${d.resX}×${d.resY} @ ${d.refreshHz ?? "?"}Hz` : "—",
+      })),
+    });
+  }
+  return { title: g.title, subtitle: name, summary, sections };
 }
 
 function ramDetail(t: DetailText, m: MachineInfo, live: LiveStats | null, index: number): PartDetail {
@@ -479,7 +499,9 @@ export function getPartDetail(id: PartId, m: MachineInfo, live: LiveStats | null
     case "cpu":
       return cpuDetail(t, m, live);
     case "gpu":
-      return gpuDetail(t, m, live);
+      return gpuDetail(t, m, live, integratedGpu(m));
+    case "gpu-discrete":
+      return gpuDetail(t, m, live, discreteGpu(m));
     case "battery":
       return batteryDetail(t, m, live);
     case "cooling":

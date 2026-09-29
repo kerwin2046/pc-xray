@@ -20,6 +20,7 @@ const en = {
   parts: {
     cpu: "Processor",
     gpu: "Integrated GPU",
+    gpuDiscrete: "Discrete GPU",
     ram: (n: number) => `Memory ${n}`,
     ssd: "SSD",
     cooling: "Cooling",
@@ -83,6 +84,8 @@ const en = {
       "This is an integrated GPU, in the same package as the CPU. It has no dedicated video memory and borrows system RAM instead, so memory speed and dual-channel mode noticeably affect its performance.",
     dualChannel: "Your memory runs in dual channel, so the iGPU gets the full memory bandwidth.",
     usage: "Everyday use, video and online games like League of Legends run fine; big AAA titles need lower settings.",
+    discrete:
+      "This is a discrete GPU on its own card, with dedicated video memory (VRAM). It is far more capable than the integrated GPU and handles demanding games and GPU compute; on a laptop the system switches to it only when the workload needs it, to save power.",
     integratedType: "Integrated",
     discreteType: "Discrete",
     vram: "Video memory",
@@ -257,6 +260,7 @@ const zh: DetailText = {
   parts: {
     cpu: "处理器",
     gpu: "核显",
+    gpuDiscrete: "独显",
     ram: (n) => `内存 ${n}`,
     ssd: "固态硬盘",
     cooling: "散热",
@@ -318,6 +322,8 @@ const zh: DetailText = {
       "这是集成显卡（核显），和 CPU 在同一个封装里。它没有独立显存，而是直接借用系统内存，所以内存速度和是否双通道会明显影响它的性能。",
     dualChannel: "你的内存是双通道，核显能拿到完整的内存带宽。",
     usage: "日常使用、看视频、英雄联盟这类网游都没问题；大型 3A 游戏需要调低画质。",
+    discrete:
+      "这是独立显卡，有单独的显卡芯片和专用显存（VRAM）。性能远强于核显，能跑大型游戏和 GPU 计算；笔记本上系统只在需要时才切到它，以节省电量。",
     integratedType: "集成显卡",
     discreteType: "独立显卡",
     vram: "显存",

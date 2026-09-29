@@ -1,7 +1,7 @@
 "use client";
 
 import type { MachineInfo } from "@/types/hardware";
-import { gpuName, listParts, type PartId } from "@/lib/hardware/parts";
+import { gpuName, listParts, integratedGpu, discreteGpu, type PartId } from "@/lib/hardware/parts";
 import { formatDisk, formatMem } from "@/lib/format";
 import { LOCALE_TAG, type Locale } from "@/i18n/config";
 import { uiText, type UiText } from "@/i18n/ui";
@@ -18,8 +18,14 @@ function partSubtitle(id: PartId, m: MachineInfo, t: UiText["overview"]): string
   switch (id) {
     case "cpu":
       return t.coresThreads(m.cpu.physicalCores, m.cpu.threads);
-    case "gpu":
-      return m.gpus[0] ? gpuName(m.gpus[0].model) : "—";
+    case "gpu": {
+      const ig = integratedGpu(m);
+      return ig ? gpuName(ig.model) : "—";
+    }
+    case "gpu-discrete": {
+      const dg = discreteGpu(m);
+      return dg ? gpuName(dg.model) : "—";
+    }
     case "battery":
       return m.battery ? `${(m.battery.maxCapacity / 1000).toFixed(0)} Wh` : "";
     case "display":

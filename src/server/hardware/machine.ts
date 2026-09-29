@@ -1,12 +1,22 @@
 import si from "systeminformation";
 import type { MachineInfo, MemoryModule, PhysicalCore } from "@/types/hardware";
-import { readCpuTopology, readMemoryModules } from "./linux";
+import { readCpuTopology, readMemoryModules } from "./platform";
 
 const GIB = 1024 ** 3;
 const COMMON_MODULE_GIB = [2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128];
 const FEATURE_FLAGS = ["ht", "vmx", "svm", "aes", "sha_ni", "avx2", "avx_vnni", "avx512f", "fma"];
 const VIRTUAL_IFACE = /^(lo|veth|br-|docker|virbr|tun|tap|vnet|Meta|utun|zt)/;
 const DISK_IMAGE_TYPE = "Disk Image";
+// Software / remote-desktop display adapters (Sunlogin OrayIdd, DisplayLink,
+// Parsec, ToDesk, the Windows "Basic Display" fallback, generic IDD drivers).
+// They register as GPUs but are not physical silicon, so exclude them here the
+// same way virtual NICs and disk images are filtered out at collection time.
+const VIRTUAL_GPU =
+  /idd|virtual|remote|displaylink|parsec|todesk|sunlogin|oray|basic display|mirage|rdp|citrix|meta/i;
+
+function isIntegratedGpu(model: string, bus: string): boolean {
+  return bus === "Onboard" || /graphics|uhd|iris|radeon\(tm\) graphics|vega/i.test(model);
+}
 
 /** Usable RAM is below the installed amount (firmware / iGPU reservations), so round up. */
 function estimateModuleBytes(totalBytes: number, count: number): number {
@@ -53,7 +63,13 @@ async function collect(): Promise<MachineInfo> {
 
   const cpu = data.cpu as si.Systeminformation.CpuData;
   const topology = await readCpuTopology();
-  const cores = topology.length > 0 ? topology : fallbackCores(cpu);
+  // Deep topology (Windows Win32 API) classifies cores but does not expose a
+  // per-core max frequency, so backfill P cores from the reported package max.
+  const maxMHz = Math.round(cpu.speedMax * 1000);
+  const cores =
+    topology.length > 0
+      ? topology.map((c) => (c.kind === "P" && c.maxMHz === 0 ? { ...c, maxMHz } : c))
+      : fallbackCores(cpu);
 
   const mem = data.mem as si.Systeminformation.MemData;
   let modules: MemoryModule[] = await readMemoryModules();
@@ -139,12 +155,15 @@ async function collect(): Promise<MachineInfo> {
       modules,
       channels: modules.length >= 2 ? 2 : modules.length === 1 ? 1 : null,
     },
-    gpus: graphics.controllers.map((g) => ({
-      vendor: g.vendor,
-      model: g.model,
-      vramMB: g.vram ?? null,
-      integrated: g.bus === "Onboard" || /graphics|uhd|iris|radeon\(tm\) graphics/i.test(g.model),
-    })),
+    gpus: graphics.controllers
+      // Drop software / remote-desktop display adapters; keep only real silicon.
+      .filter((g) => !VIRTUAL_GPU.test(`${g.vendor} ${g.model}`))
+      .map((g) => ({
+        vendor: g.vendor,
+        model: g.model,
+        vramMB: g.vram ?? null,
+        integrated: isIntegratedGpu(g.model, g.bus),
+      })),
     displays: graphics.displays.map((d) => ({
       connection: d.connection ?? "",
       builtin: d.builtin,
