@@ -1,0 +1,84 @@
+name: Bug report
+description: Something is wrong, missing, or misreported
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please do **not** use this form for security
+        issues — see SECURITY.md instead.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `pnpm dev`
+        2. Open http://127.0.0.1:3000
+        3. Click the memory module
+        4. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Hardware detection (wrong or missing values)
+        - Live telemetry (load, temperature, fan, battery)
+        - 3D scene (rendering, performance, layout)
+        - Interface and interaction
+        - Translation
+        - Build, install, or tooling
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Arch Linux, kernel 6.12.4
+    validations:
+      required: true
+
+  - type: input
+    id: hardware
+    attributes:
+      label: CPU and machine
+      placeholder: Intel Core Ultra 7 155H, Lenovo Yoga Pro 7
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Node version and commit
+      placeholder: Node 22.11.0, commit a1b2c3d
+    validations:
+      required: true
+
+  - type: textarea
+    id: snapshot
+    attributes:
+      label: Hardware snapshot
+      description: |
+        Run `pnpm snapshot` and paste or attach the JSON. It contains no serial
+        numbers, MAC addresses, IP addresses, or UUIDs, but it does include your
+        hostname and disk model names — review it before posting.
+      render: json
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console or terminal output
+      render: shell

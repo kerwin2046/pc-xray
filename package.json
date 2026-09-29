@@ -2,6 +2,31 @@
   "name": "pc-xray",
   "version": "0.1.0",
   "private": true,
+  "description": "See inside your computer: real hardware data rendered as an interactive 3D cutaway.",
+  "license": "MIT",
+  "author": "kerwin2046",
+  "homepage": "https://github.com/kerwin2046/pc-xray#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kerwin2046/pc-xray.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kerwin2046/pc-xray/issues"
+  },
+  "keywords": [
+    "hardware",
+    "system-information",
+    "visualization",
+    "3d",
+    "react-three-fiber",
+    "nextjs",
+    "monitoring",
+    "sysfs",
+    "linux"
+  ],
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
