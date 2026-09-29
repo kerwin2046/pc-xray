@@ -20,6 +20,27 @@ export const PALETTE = {
   npu: "#eab308",
 };
 
+/** Physically-based colors for the realistic look. */
+export const REAL = {
+  pcb: "#0d2e21",
+  substrate: "#1b3a2a",
+  silicon: "#353c4a",
+  siliconCore: "#454d5f",
+  chip: "#17181b",
+  gold: "#e3b456",
+  copper: "#c7794a",
+  steel: "#b4b9c0",
+  aluminum: "#9aa0a8",
+  plastic: "#141518",
+  chassis: "#2a2d32",
+  keycap: "#18191c",
+  mlcc: "#b08d62",
+  resistor: "#1c1d20",
+  choke: "#4d525a",
+  socket: "#1d1e22",
+  connector: "#e6e2d8",
+};
+
 export const CORE_COLOR: Record<CoreKind, string> = {
   P: "#f97316",
   E: "#22d3ee",

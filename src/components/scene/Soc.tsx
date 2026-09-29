@@ -6,7 +6,8 @@ import { MathUtils, type Group } from "three";
 import type { PhysicalCore } from "@/lib/types";
 import { CORE_KIND_LABEL } from "@/lib/parts";
 import { formatGHz, formatTemp } from "@/lib/format";
-import { CORE_COLOR, PALETTE } from "./colors";
+import { CORE_COLOR, PALETTE, REAL } from "./colors";
+import { inRects, rng, Scatter, type Box } from "./detail";
 import { Label } from "./Label";
 import { Part, PartMaterial, usePart } from "./Part";
 import { useScene } from "./SceneContext";
@@ -22,7 +23,6 @@ const SUBSTRATE_H = 0.02;
 const TILE_H = 0.014;
 const CORE_H = 0.006;
 const TILE_Y = SUBSTRATE_H / 2 + TILE_H / 2;
-const CORE_Y = TILE_H / 2 + CORE_H / 2;
 
 interface Rect {
   x: number;
@@ -141,14 +141,25 @@ function Lift({ by, children }: { by: number; children: ReactNode }) {
   return <group ref={ref}>{children}</group>;
 }
 
+/** Blocks drawn on a tile: raised in the schematic look, nearly flush with the die when realistic. */
+function useBlockHeight() {
+  const { realistic } = useScene();
+  const h = realistic ? 0.0015 : CORE_H;
+  return { h, y: TILE_H / 2 + h / 2 };
+}
+
 function Tile({ rect, label, children }: { rect: Rect; label?: string; children?: ReactNode }) {
   const { active } = usePart();
-  const { exploded } = useScene();
+  const { exploded, realistic } = useScene();
   return (
     <group position={[rect.x, TILE_Y, rect.z]}>
       <mesh>
         <boxGeometry args={[rect.w, TILE_H, rect.d]} />
-        <PartMaterial color={PALETTE.silicon} metalness={0.5} roughness={0.35} />
+        <PartMaterial
+          color={realistic ? REAL.silicon : PALETTE.silicon}
+          metalness={realistic ? 0.75 : 0.5}
+          roughness={realistic ? 0.12 : 0.35}
+        />
       </mesh>
       {children}
       {label && (
@@ -159,8 +170,9 @@ function Tile({ rect, label, children }: { rect: Rect; label?: string; children?
 }
 
 function CoreBlock({ rect, tile }: { rect: CoreRect; tile: Rect }) {
-  const { live } = useScene();
+  const { live, realistic } = useScene();
   const [hover, setHover] = useState(false);
+  const block = useBlockHeight();
   const { core } = rect;
   const perCpu = live?.cpu.perCpu;
   const load = perCpu ? core.cpus.reduce((s, i) => s + (perCpu[i] ?? 0), 0) / core.cpus.length : null;
@@ -168,15 +180,16 @@ function CoreBlock({ rect, tile }: { rect: CoreRect; tile: Rect }) {
   const color = CORE_COLOR[core.kind];
 
   return (
-    <group position={[rect.x - tile.x, CORE_Y, rect.z - tile.z]}>
+    <group position={[rect.x - tile.x, block.y, rect.z - tile.z]}>
       <mesh onPointerOver={() => setHover(true)} onPointerOut={() => setHover(false)}>
-        <boxGeometry args={[rect.w, CORE_H, rect.d]} />
+        <boxGeometry args={[rect.w, block.h, rect.d]} />
         <PartMaterial
-          color={color}
+          color={realistic ? REAL.siliconCore : color}
           glowColor={color}
           glow={load === null ? 0.25 : 0.1 + (load / 100) * 1.6}
           heat={temp}
-          roughness={0.4}
+          metalness={realistic ? 0.7 : 0.2}
+          roughness={realistic ? 0.18 : 0.4}
         />
       </mesh>
       <Label
@@ -195,7 +208,8 @@ function CoreBlock({ rect, tile }: { rect: CoreRect; tile: Rect }) {
 }
 
 function GpuTile({ rect }: { rect: Rect }) {
-  const { live } = useScene();
+  const { live, realistic } = useScene();
+  const block = useBlockHeight();
   const blocks = useMemo(() => {
     const cols = 2;
     const rows = 4;
@@ -213,9 +227,16 @@ function GpuTile({ rect }: { rect: Rect }) {
     <Part id="gpu" position={[0, 0, 0]} label="核显" labelOffset={[rect.x, 0.1, rect.z]} related={["cpu"]}>
       <Tile rect={rect} label="图形模块">
         {blocks.map((b, i) => (
-          <mesh key={i} position={[b.x, CORE_Y, b.z]}>
-            <boxGeometry args={[b.w, CORE_H, b.d]} />
-            <PartMaterial color={PALETTE.gpu} glow={0.35} heat={live?.gpuTemp} roughness={0.4} />
+          <mesh key={i} position={[b.x, block.y, b.z]}>
+            <boxGeometry args={[b.w, block.h, b.d]} />
+            <PartMaterial
+              color={realistic ? "#463d52" : PALETTE.gpu}
+              glowColor={realistic ? PALETTE.gpu : undefined}
+              glow={0.35}
+              heat={live?.gpuTemp}
+              metalness={realistic ? 0.7 : 0.2}
+              roughness={realistic ? 0.18 : 0.4}
+            />
           </mesh>
         ))}
       </Tile>
@@ -223,16 +244,45 @@ function GpuTile({ rect }: { rect: Rect }) {
   );
 }
 
+function useSubstrateCaps(layout: SocLayout) {
+  return useMemo(() => {
+    const tiles = [layout.compute, layout.gpu, ...(layout.soc ? [layout.soc] : [])];
+    const r = rng(layout.cores.length * 7 + 3);
+    const caps: Box[] = [];
+    const edge = 0.012;
+    for (let i = 0; i < 160; i++) {
+      const x = (r() - 0.5) * (layout.width - edge * 2);
+      const z = (r() - 0.5) * (layout.depth - edge * 2);
+      if (inRects(x, z, tiles, 0.008)) continue;
+      const rot = r() < 0.5 ? 0 : Math.PI / 2;
+      caps.push({ p: [x, SUBSTRATE_H / 2 + 0.003, z], s: [0.011, 0.006, 0.006], r: rot });
+    }
+    return caps;
+  }, [layout]);
+}
+
+function SubstrateDetail({ layout }: { layout: SocLayout }) {
+  const caps = useSubstrateCaps(layout);
+  return <Scatter items={caps} color={REAL.mlcc} roughness={0.45} />;
+}
+
 export function CpuPackage({ layout }: { layout: SocLayout }) {
-  const { live } = useScene();
+  const { live, realistic } = useScene();
+  const block = useBlockHeight();
   const { compute, gpu, soc, l3, cores } = layout;
 
   return (
     <group>
       <mesh>
         <boxGeometry args={[layout.width, SUBSTRATE_H, layout.depth]} />
-        <PartMaterial color={PALETTE.substrate} heat={live?.cpu.packageTemp} roughness={0.8} />
+        <PartMaterial
+          color={realistic ? REAL.substrate : PALETTE.substrate}
+          heat={live?.cpu.packageTemp}
+          roughness={realistic ? 0.45 : 0.8}
+          clearcoat={0.5}
+        />
       </mesh>
+      {realistic && <SubstrateDetail layout={layout} />}
       {!layout.tiled && (
         <mesh position={[0, SUBSTRATE_H / 2 + 0.002, 0]}>
           <boxGeometry args={[layout.width - MARGIN, 0.004, layout.depth - MARGIN]} />
@@ -242,9 +292,15 @@ export function CpuPackage({ layout }: { layout: SocLayout }) {
       <Lift by={layout.tiled ? 0.08 : 0}>
         <Tile rect={compute} label={layout.tiled ? "计算模块" : "处理器核心"}>
           {l3 && (
-            <mesh position={[l3.x - compute.x, CORE_Y, l3.z - compute.z]}>
-              <boxGeometry args={[l3.w, CORE_H, l3.d]} />
-              <PartMaterial color={PALETTE.l3} glow={0.3} />
+            <mesh position={[l3.x - compute.x, block.y, l3.z - compute.z]}>
+              <boxGeometry args={[l3.w, block.h, l3.d]} />
+              <PartMaterial
+                color={realistic ? "#3d3a54" : PALETTE.l3}
+                glowColor={realistic ? PALETTE.l3 : undefined}
+                glow={0.3}
+                metalness={realistic ? 0.7 : 0.2}
+                roughness={realistic ? 0.18 : 0.6}
+              />
             </mesh>
           )}
           {cores

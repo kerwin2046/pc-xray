@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { MathUtils, type Group } from "three";
+import { MathUtils, type Group, type Texture } from "three";
 import type { PartId } from "@/lib/parts";
 import { heatColor, PALETTE } from "./colors";
 import { Label } from "./Label";
@@ -95,7 +95,7 @@ export function Part({
   );
 }
 
-interface PartMaterialProps {
+export interface PartMaterialProps {
   color: string;
   /** Temperature used when heat view is on. */
   heat?: number | null;
@@ -104,7 +104,16 @@ interface PartMaterialProps {
   opacity?: number;
   metalness?: number;
   roughness?: number;
+  /** Must be present from mount: three.js recompiles the shader when a map appears or disappears. */
+  map?: Texture;
+  /** Makes `map` self-illuminated (screens). */
+  mapGlow?: number;
+  /** Lacquer layer (solder mask, stickers); only used in the realistic look. */
+  clearcoat?: number;
 }
+
+/** Data glows (core load, memory use) are toned down so they read as a tint on real materials. */
+const REALISTIC_GLOW = 0.35;
 
 export function PartMaterial({
   color,
@@ -114,32 +123,39 @@ export function PartMaterial({
   opacity = 1,
   metalness = 0.2,
   roughness = 0.6,
+  map,
+  mapGlow,
+  clearcoat,
 }: PartMaterialProps) {
   const { active, hovered, dimmed } = usePart();
-  const { heatMode } = useScene();
+  const { heatMode, realistic } = useScene();
   const hasHeat = heatMode && heat != null;
-  const base = hasHeat ? heatColor(heat) : heatMode ? "#1e293b" : color;
-  let emissive = hasHeat ? base : (glowColor ?? base);
-  let intensity = hasHeat ? 0.45 : heatMode ? 0 : glow;
+  const base = hasHeat ? heatColor(heat) : heatMode ? "#1e293b" : map ? "#ffffff" : color;
+  let emissive = hasHeat ? base : mapGlow !== undefined ? "#ffffff" : (glowColor ?? base);
+  let intensity = hasHeat ? 0.45 : heatMode ? 0 : (mapGlow ?? glow * (realistic ? REALISTIC_GLOW : 1));
   // Keep self-lit meshes (cores, heat colors) in their own color; tint only plain surfaces.
-  const selfLit = hasHeat || (!heatMode && glowColor !== undefined);
+  const selfLit = hasHeat || (!heatMode && (glowColor !== undefined || mapGlow !== undefined));
   if ((active || hovered) && !selfLit) {
     emissive = PALETTE.select;
-    intensity = Math.max(intensity, active ? 0.18 : 0.2);
+    intensity = Math.max(intensity, realistic ? (active ? 0.03 : 0.12) : active ? 0.18 : 0.2);
   }
   const finalOpacity = dimmed ? Math.min(opacity, 0.12) : opacity;
-  return (
-    <meshStandardMaterial
-      color={base}
-      emissive={emissive}
-      emissiveIntensity={intensity}
-      metalness={metalness}
-      roughness={roughness}
-      transparent={finalOpacity < 1}
-      opacity={finalOpacity}
-      depthWrite={finalOpacity >= 1}
-    />
-  );
+  const props = {
+    color: base,
+    emissive,
+    emissiveIntensity: intensity,
+    metalness,
+    roughness,
+    map: map ?? null,
+    emissiveMap: mapGlow !== undefined ? (map ?? null) : null,
+    transparent: finalOpacity < 1,
+    opacity: finalOpacity,
+    depthWrite: finalOpacity >= 1,
+  };
+  if (realistic && clearcoat) {
+    return <meshPhysicalMaterial {...props} clearcoat={clearcoat} clearcoatRoughness={0.3} />;
+  }
+  return <meshStandardMaterial {...props} />;
 }
 
 export function GhostMaterial({ opacity = 0.06 }: { opacity?: number }) {

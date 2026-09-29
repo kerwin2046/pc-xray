@@ -10,7 +10,13 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   return (
     <XRayApp
       initialMachine={machine}
-      initialView={{ part, exploded: flag("exploded"), heat: flag("heat"), labels: params.labels !== "0" }}
+      initialView={{
+        part,
+        exploded: flag("exploded"),
+        heat: flag("heat"),
+        labels: params.labels !== "0",
+        realistic: params.style === "real",
+      }}
     />
   );
 }

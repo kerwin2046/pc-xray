@@ -22,6 +22,7 @@ interface InitialView {
   exploded: boolean;
   heat: boolean;
   labels: boolean;
+  realistic: boolean;
 }
 
 interface XRayAppProps {
@@ -41,6 +42,7 @@ export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
   const [exploded, setExploded] = useState(initialView.exploded);
   const [heatMode, setHeatMode] = useState(initialView.heat);
   const [showLabels, setShowLabels] = useState(initialView.labels);
+  const [realistic, setRealistic] = useState(initialView.realistic);
   const [autoRotate, setAutoRotate] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
@@ -62,6 +64,9 @@ export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
         case "l":
           setShowLabels((v) => !v);
           break;
+        case "v":
+          setRealistic((v) => !v);
+          break;
         case "r":
           reset();
           break;
@@ -75,8 +80,19 @@ export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
   }, [reset]);
 
   const state: SceneState = useMemo(
-    () => ({ machine, live, selected, hovered, exploded, heatMode, showLabels, select: setSelected, setHovered }),
-    [machine, live, selected, hovered, exploded, heatMode, showLabels],
+    () => ({
+      machine,
+      live,
+      selected,
+      hovered,
+      exploded,
+      heatMode,
+      showLabels,
+      realistic,
+      select: setSelected,
+      setHovered,
+    }),
+    [machine, live, selected, hovered, exploded, heatMode, showLabels, realistic],
   );
 
   const insights = useMemo(() => getInsights(machine, live), [machine, live]);
@@ -126,6 +142,8 @@ export function XRayApp({ initialMachine, initialView }: XRayAppProps) {
             heatMode={heatMode}
             showLabels={showLabels}
             autoRotate={autoRotate}
+            realistic={realistic}
+            onToggleRealistic={() => setRealistic((v) => !v)}
             onToggleExploded={() => setExploded((v) => !v)}
             onToggleHeat={() => setHeatMode((v) => !v)}
             onToggleLabels={() => setShowLabels((v) => !v)}

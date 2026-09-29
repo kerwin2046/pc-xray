@@ -1,12 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
+import type { Group, Mesh, Object3D } from "three";
 import type { MachineInfo } from "@/lib/types";
 import { gpuName, type PartId } from "@/lib/parts";
 import { formatDisk, formatMem } from "@/lib/format";
 import { Part } from "./Part";
-import { computeSocLayout, CpuPackage } from "./Soc";
-import { Battery, Board, Cooling, RamStick, Ssd, WifiCard } from "./Components";
+import { computeSocLayout, CpuPackage, type SocLayout } from "./Soc";
+import {
+  Battery,
+  Board,
+  Cooling,
+  RAM_SIZE,
+  RamStick,
+  Ssd,
+  SSD_SIZE,
+  WIFI_SIZE,
+  WifiCard,
+  type BoardFixtures,
+} from "./Components";
+import type { Rect } from "./detail";
 import { Chassis, Deck, Lid } from "./Shell";
 import { useScene } from "./SceneContext";
 
@@ -74,21 +87,72 @@ export function getFocus(id: PartId, exploded: boolean): Focus {
   }
 }
 
+/** Converts laptop-space rects to board-local ones. */
+function onBoard(r: Rect): Rect {
+  return { ...r, x: r.x - BOARD.pos[0], z: r.z - BOARD.pos[2] };
+}
+
+function boardFixtures(machine: MachineInfo, soc: SocLayout): BoardFixtures {
+  const ram = machine.memory.modules.map((_, i) => ramPos(i));
+  const ssd = machine.disks.map((_, i) => ssdPos(i));
+  const [bw, , bd] = BOARD.size;
+  return {
+    keepOut: [
+      { x: SOC_POS[0], z: SOC_POS[2], w: soc.width + 0.04, d: soc.depth + 0.04 },
+      ...ram.map(([x, , z]) => ({ x, z, w: RAM_SIZE.w + 0.04, d: RAM_SIZE.d + 0.08 })),
+      ...ssd.map(([x, , z]) => ({ x, z, w: SSD_SIZE.w + 0.06, d: SSD_SIZE.d + 0.04 })),
+      { x: WIFI_POS[0], z: WIFI_POS[2], w: WIFI_SIZE.w + 0.06, d: WIFI_SIZE.d + 0.04 },
+    ].map(onBoard),
+    dimmSockets: ram.map(([x, , z]) => onBoard({ x, z: z + RAM_SIZE.d / 2 + 0.008, w: RAM_SIZE.w + 0.04, d: 0.04 })),
+    m2Sockets: [
+      ...ssd.map(([x, , z]) => ({ x: x - SSD_SIZE.w / 2 - 0.012, z, w: 0.035, d: SSD_SIZE.d + 0.03 })),
+      { x: WIFI_POS[0] + WIFI_SIZE.w / 2 + 0.012, z: WIFI_POS[2], w: 0.035, d: WIFI_SIZE.d + 0.03 },
+    ].map(onBoard),
+    standoffs: [
+      ...ssd.map(([x, , z]): [number, number] => [x + SSD_SIZE.w / 2 - 0.014 - BOARD.pos[0], z - BOARD.pos[2]]),
+      [WIFI_POS[0] - WIFI_SIZE.w / 2 + 0.014 - BOARD.pos[0], WIFI_POS[2] - BOARD.pos[2]],
+      [-bw / 2 + 0.05, -bd / 2 + 0.05],
+      [bw / 2 - 0.05, -bd / 2 + 0.05],
+      [bw / 2 - 0.05, bd / 2 - 0.05],
+      [-bw / 2 + 0.05, bd / 2 - 0.05],
+    ],
+    chokes: onBoard({ x: SOC_POS[0], z: SOC_POS[2] + soc.depth / 2 + 0.07, w: soc.width * 0.9, d: 0.06 }),
+  };
+}
+
+/** Realistic mode lights with a shadow-casting sun; subtrees tagged `noShadow` don't cast. */
+function useShadows(root: RefObject<Group | null>, enabled: boolean, deps: unknown) {
+  useLayoutEffect(() => {
+    const apply = (o: Object3D, cast: boolean) => {
+      const c = cast && !o.userData.noShadow;
+      if ((o as Mesh).isMesh) {
+        o.castShadow = enabled && c;
+        o.receiveShadow = enabled;
+      }
+      for (const child of o.children) apply(child, c);
+    };
+    if (root.current) apply(root.current, true);
+  }, [root, enabled, deps]);
+}
+
 export function Laptop({ machine }: { machine: MachineInfo }) {
-  const { live } = useScene();
+  const { live, realistic } = useScene();
+  const root = useRef<Group>(null);
   const soc = useMemo(() => computeSocLayout(machine.cpu.cores), [machine.cpu.cores]);
+  const fixtures = useMemo(() => boardFixtures(machine, soc), [machine, soc]);
   const plateY = SOC_POS[1] + 0.045;
   const builtin = machine.displays.find((d) => d.builtin);
   const gpu = machine.gpus[0];
+  useShadows(root, realistic, machine);
 
   const cpuLabel = `${machine.cpu.brand.replace(/^Intel |^AMD /, "")} · ${machine.cpu.physicalCores}核${machine.cpu.threads}线程`;
 
   return (
-    <group position={[0, 0, 0.2]}>
+    <group ref={root} position={[0, 0, 0.2]}>
       <Chassis w={W} h={H} d={D} />
 
       <Part id="board" position={BOARD.pos} explode={[0, LIFT.board, 0]} label="主板" labelOffset={[1.0, 0.06, 0.45]}>
-        <Board size={BOARD.size} />
+        <Board size={BOARD.size} fixtures={fixtures} name={machine.system.board.split(" ").slice(0, 2).join(" ")} />
       </Part>
 
       <Part
@@ -109,9 +173,9 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
           position={ramPos(i)}
           explode={[0, LIFT.cards, 0]}
           label={`${m.type}-${m.speedMTs ?? "?"} · ${m.sizeBytes ? formatMem(m.sizeBytes) : "?"}`}
-          labelOffset={[0.35, 0.08, 0]}
+          labelOffset={[0.3, 0.08, 0]}
         >
-          <RamStick index={i} />
+          <RamStick index={i} module={m} />
         </Part>
       ))}
 
@@ -124,7 +188,7 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
           label={`${disk.type} · ${formatDisk(disk.sizeBytes)}`}
           labelOffset={[0, 0.08, 0.08]}
         >
-          <Ssd />
+          <Ssd disk={disk} />
         </Part>
       ))}
 
@@ -167,7 +231,9 @@ export function Laptop({ machine }: { machine: MachineInfo }) {
         labelOffset={[-1.1, 0.06, 0.5]}
         interactive={false}
       >
-        <Deck w={W} d={D} />
+        <group userData={{ noShadow: true }}>
+          <Deck w={W} d={D} />
+        </group>
       </Part>
 
       <Part

@@ -29,6 +29,8 @@ interface ToolbarProps {
   heatMode: boolean;
   showLabels: boolean;
   autoRotate: boolean;
+  realistic: boolean;
+  onToggleRealistic: () => void;
   onToggleExploded: () => void;
   onToggleHeat: () => void;
   onToggleLabels: () => void;
@@ -42,6 +44,9 @@ export function Toolbar(p: ToolbarProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   return (
     <div className="pointer-events-auto flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/70 p-1.5 shadow-2xl backdrop-blur-md">
+      <ToolButton active={p.realistic} onClick={p.onToggleRealistic} hotkey="V">
+        真实外观
+      </ToolButton>
       <ToolButton active={p.exploded} onClick={p.onToggleExploded} hotkey="E">
         爆炸视图
       </ToolButton>

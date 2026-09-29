@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { CameraControls, Grid } from "@react-three/drei";
+import { CameraControls, ContactShadows, Environment, Grid, Lightformer } from "@react-three/drei";
 import { Vector3 } from "three";
 import { DEFAULT_VIEW, EXPLODED_VIEW, getFocus, Laptop } from "./Laptop";
 import { SceneContext, useScene, type SceneState } from "./SceneContext";
@@ -46,6 +46,44 @@ function Controls({ autoRotate, resetKey }: { autoRotate: boolean; resetKey: num
   );
 }
 
+function SchematicLights() {
+  return (
+    <>
+      <ambientLight intensity={0.55} />
+      <directionalLight position={[5, 8, 4]} intensity={1.3} />
+      <directionalLight position={[-6, 4, -3]} intensity={0.35} color="#7dd3fc" />
+      <pointLight position={[0, 2, 1]} intensity={3} distance={6} color="#38bdf8" />
+    </>
+  );
+}
+
+/** Reflections come from Lightformers rendered locally, so no HDR download is needed. */
+function StudioLights() {
+  return (
+    <>
+      <ambientLight intensity={0.12} />
+      <directionalLight
+        castShadow
+        position={[3, 6.5, 3.5]}
+        intensity={1.8}
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0002}
+        shadow-normalBias={0.01}
+      >
+        <orthographicCamera attach="shadow-camera" args={[-3, 3, 3, -3, 0.5, 20]} />
+      </directionalLight>
+      <directionalLight position={[-5, 3, -4]} intensity={0.35} color="#bfdbfe" />
+      <Environment resolution={256} frames={1} environmentIntensity={0.85}>
+        <Lightformer form="rect" intensity={2.2} position={[0, 6, 1]} scale={[10, 5, 1]} />
+        <Lightformer form="rect" intensity={1.1} position={[-6, 2, 2]} scale={[6, 2, 1]} color="#dbeafe" />
+        <Lightformer form="rect" intensity={0.7} position={[6, 1.5, -2]} scale={[6, 2, 1]} color="#fde68a" />
+        <Lightformer form="ring" intensity={1.4} position={[2.5, 3, 6]} scale={2.5} />
+      </Environment>
+      <ContactShadows position={[0, -0.001, 0.2]} scale={[6, 4.5]} blur={2.2} far={1.2} opacity={0.75} resolution={512} />
+    </>
+  );
+}
+
 interface SceneCanvasProps {
   state: SceneState;
   autoRotate: boolean;
@@ -59,17 +97,15 @@ export function SceneCanvas({ state, autoRotate, resetKey }: SceneCanvasProps) {
   return (
     <div className="relative h-full w-full">
     <Canvas
-      dpr={[1, 2]}
+      shadows="percentage"
+      dpr={[1, state.realistic ? 1.5 : 2]}
       camera={{ position: DEFAULT_VIEW.position, fov: 38, near: 0.05, far: 100 }}
       onPointerMissed={() => state.select(null)}
     >
       <SceneContext.Provider value={value}>
         <color attach="background" args={["#05070d"]} />
         <fog attach="fog" args={["#05070d", 10, 22]} />
-        <ambientLight intensity={0.55} />
-        <directionalLight position={[5, 8, 4]} intensity={1.3} />
-        <directionalLight position={[-6, 4, -3]} intensity={0.35} color="#7dd3fc" />
-        <pointLight position={[0, 2, 1]} intensity={3} distance={6} color="#38bdf8" />
+        {state.realistic ? <StudioLights /> : <SchematicLights />}
         <Laptop machine={state.machine} />
         <Grid
           position={[0, -0.002, 0]}

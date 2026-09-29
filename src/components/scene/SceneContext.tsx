@@ -12,6 +12,8 @@ export interface SceneState {
   exploded: boolean;
   heatMode: boolean;
   showLabels: boolean;
+  /** Photoreal materials and detail instead of the schematic x-ray look. */
+  realistic: boolean;
   /** DOM layer over the canvas that 3D-anchored labels are appended to. */
   labelLayer?: HTMLDivElement | null;
   select: (id: PartId | null) => void;

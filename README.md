@@ -29,12 +29,14 @@ pnpm typecheck && pnpm lint
 - **整机诊断**：内存压力、交换空间、CPU 温度、单/双通道、电池老化、磁盘空间。
 - **快照导入 / 导出**：可以把别人的 `snapshot.json` 导入查看。导出前已去除序列号、MAC、IP、UUID。
 
-快捷键：`E` 爆炸视图 · `T` 温度视图 · `L` 标签 · `R` 重置视角 · `Esc` 取消选择。
+- **真实外观**（`V`）：PBR 材质 + 本地生成的环境反射与阴影；主板丝印与贴片元件、内存金手指与颗粒丝印、SSD/电池/网卡贴纸（文字来自真实数据）、热管风扇、键盘与屏幕都做了细节。
+
+快捷键：`V` 真实外观 · `E` 爆炸视图 · `T` 温度视图 · `L` 标签 · `R` 重置视角 · `Esc` 取消选择。
 
 ### 深链接
 
 ```
-/?part=cpu&exploded=1&heat=1&labels=0
+/?part=cpu&exploded=1&heat=1&labels=0&style=real
 ```
 
 `part` 可选 `board` `cpu` `gpu` `ram-0` `ssd-0` `battery` `cooling` `wifi` `display` `input`。

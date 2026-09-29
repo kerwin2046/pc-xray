@@ -71,7 +71,7 @@ export function DetailPanel({ machine, live, selected, insights, onSelect }: Det
             </button>
           ))}
           <div className="pt-2 text-[11px] leading-relaxed text-slate-500">
-            快捷键：<kbd className="font-mono">E</kbd> 爆炸视图 · <kbd className="font-mono">T</kbd> 温度视图 ·{" "}
+            快捷键：<kbd className="font-mono">V</kbd> 真实外观 · <kbd className="font-mono">E</kbd> 爆炸视图 · <kbd className="font-mono">T</kbd> 温度视图 ·{" "}
             <kbd className="font-mono">L</kbd> 标签 · <kbd className="font-mono">R</kbd> 重置 ·{" "}
             <kbd className="font-mono">Esc</kbd> 取消选择
           </div>
