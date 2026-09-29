@@ -2,29 +2,21 @@
 
 import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import type { Group, Mesh, Object3D } from "three";
-import type { MachineInfo } from "@/lib/types";
-import { gpuName, type PartId } from "@/lib/parts";
+import type { MachineInfo } from "@/types/hardware";
+import { gpuName, type PartId } from "@/lib/hardware/parts";
 import { formatDisk, formatMem } from "@/lib/format";
-import { uiText } from "@/lib/i18n/ui";
-import { Part } from "./Part";
-import { computeSocLayout, CpuPackage, type SocLayout } from "./Soc";
-import {
-  Battery,
-  Board,
-  Cooling,
-  RAM_SIZE,
-  RamStick,
-  Ssd,
-  SSD_SIZE,
-  WIFI_SIZE,
-  WifiCard,
-  type BoardFixtures,
-} from "./Components";
-import type { Rect } from "./detail";
+import { uiText } from "@/i18n/ui";
+import { Part } from "../Part";
+import type { Rect, Vec3 } from "../primitives";
+import { useScene } from "../SceneContext";
+import { Battery } from "./Battery";
+import { Board, type BoardFixtures } from "./Board";
+import { Cooling } from "./Cooling";
+import { RAM_SIZE, RamStick } from "./RamStick";
 import { Chassis, Deck, Lid } from "./Shell";
-import { useScene } from "./SceneContext";
-
-type Vec3 = [number, number, number];
+import { computeSocLayout, CpuPackage, type SocLayout } from "./Soc";
+import { SSD_SIZE, Ssd } from "./Ssd";
+import { WIFI_SIZE, WifiCard } from "./WifiCard";
 
 const W = 3.2;
 const D = 2.2;

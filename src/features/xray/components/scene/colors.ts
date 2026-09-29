@@ -1,5 +1,5 @@
 import { Color } from "three";
-import type { CoreKind } from "@/lib/types";
+import type { CoreKind } from "@/types/hardware";
 
 export const PALETTE = {
   pcb: "#0f3d2e",

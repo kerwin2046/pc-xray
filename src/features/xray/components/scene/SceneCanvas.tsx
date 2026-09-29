@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ComponentRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { CameraControls, ContactShadows, Environment, Grid, Lightformer } from "@react-three/drei";
 import { Vector3 } from "three";
-import { DEFAULT_VIEW, EXPLODED_VIEW, getFocus, Laptop } from "./Laptop";
+import { DEFAULT_VIEW, EXPLODED_VIEW, getFocus, Laptop } from "./models";
 import { SceneContext, useScene, type SceneState } from "./SceneContext";
 
 const SCENE_OFFSET_Z = 0.2;

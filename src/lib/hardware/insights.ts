@@ -1,8 +1,8 @@
-import type { LiveStats, MachineInfo } from "@/lib/types";
-import type { PartId } from "@/lib/parts";
+import type { LiveStats, MachineInfo } from "@/types/hardware";
+import type { PartId } from "@/lib/hardware/parts";
 import { formatMem, formatPct } from "@/lib/format";
-import type { Locale } from "@/lib/i18n/config";
-import { detailText } from "@/lib/i18n/detail";
+import type { Locale } from "@/i18n/config";
+import { detailText } from "@/i18n/detail";
 
 export type InsightLevel = "ok" | "info" | "warn" | "danger";
 

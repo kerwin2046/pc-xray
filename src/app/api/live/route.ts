@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { getLiveStats } from "@/lib/collect/live";
+import { getLiveStats } from "@/server/hardware/live";
 
 export async function GET() {
   await connection();

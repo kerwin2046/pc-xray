@@ -3,7 +3,7 @@
 import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { MathUtils, type Group, type Texture } from "three";
-import type { PartId } from "@/lib/parts";
+import type { PartId } from "@/lib/hardware/parts";
 import { heatColor, PALETTE } from "./colors";
 import { Label } from "./Label";
 import { useScene } from "./SceneContext";

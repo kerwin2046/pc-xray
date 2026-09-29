@@ -1,10 +1,10 @@
 "use client";
 
-import type { MachineInfo } from "@/lib/types";
-import { gpuName, listParts, type PartId } from "@/lib/parts";
+import type { MachineInfo } from "@/types/hardware";
+import { gpuName, listParts, type PartId } from "@/lib/hardware/parts";
 import { formatDisk, formatMem } from "@/lib/format";
-import { LOCALE_TAG, type Locale } from "@/lib/i18n/config";
-import { uiText, type UiText } from "@/lib/i18n/ui";
+import { LOCALE_TAG, type Locale } from "@/i18n/config";
+import { uiText, type UiText } from "@/i18n/ui";
 
 function partSubtitle(id: PartId, m: MachineInfo, t: UiText["overview"]): string {
   if (id.startsWith("ram-")) {

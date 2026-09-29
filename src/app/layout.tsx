@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { LOCALE_TAG } from "@/lib/i18n/config";
-import { requestLocale } from "@/lib/i18n/server";
-import { uiText } from "@/lib/i18n/ui";
+import { LOCALE_TAG } from "@/i18n/config";
+import { requestLocale } from "@/i18n/server";
+import { uiText } from "@/i18n/ui";
 import "./globals.css";
 
 const { meta } = uiText("en");

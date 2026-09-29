@@ -1,5 +1,5 @@
 import si from "systeminformation";
-import type { LiveStats } from "@/lib/types";
+import type { LiveStats } from "@/types/hardware";
 import { readHwmon, readModuleTemps } from "./linux";
 
 export async function getLiveStats(): Promise<LiveStats> {

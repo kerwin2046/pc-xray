@@ -1,13 +1,13 @@
 "use client";
 
-import type { LiveStats, MachineInfo } from "@/lib/types";
-import { getPartDetail, type CoreRow, type PartId } from "@/lib/parts";
-import type { Insight, InsightLevel } from "@/lib/insights";
+import type { LiveStats, MachineInfo } from "@/types/hardware";
+import { getPartDetail, type CoreRow, type PartId } from "@/lib/hardware/parts";
+import type { Insight, InsightLevel } from "@/lib/hardware/insights";
 import { formatGHz, formatTemp } from "@/lib/format";
-import type { Locale } from "@/lib/i18n/config";
-import { detailText } from "@/lib/i18n/detail";
-import { uiText } from "@/lib/i18n/ui";
-import { CORE_COLOR } from "@/components/scene/colors";
+import type { Locale } from "@/i18n/config";
+import { detailText } from "@/i18n/detail";
+import { uiText } from "@/i18n/ui";
+import { CORE_COLOR } from "@/features/xray/components/scene/colors";
 
 const LEVEL_STYLE: Record<InsightLevel, string> = {
   ok: "border-emerald-400/30 bg-emerald-500/10 text-emerald-200",

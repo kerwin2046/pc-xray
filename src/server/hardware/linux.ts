@@ -1,6 +1,6 @@
 import { open, readdir, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
-import type { CoreKind, MemoryModule, PhysicalCore } from "@/lib/types";
+import type { CoreKind, MemoryModule, PhysicalCore } from "@/types/hardware";
 
 async function readText(file: string): Promise<string | null> {
   try {

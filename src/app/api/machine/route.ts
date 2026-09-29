@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { getMachineInfo } from "@/lib/collect/machine";
+import { getMachineInfo } from "@/server/hardware/machine";
 
 export async function GET() {
   await connection();

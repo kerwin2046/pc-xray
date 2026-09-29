@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { LOCALES, type Locale } from "@/lib/i18n/config";
-import { uiText } from "@/lib/i18n/ui";
+import { LOCALES, type Locale } from "@/i18n/config";
+import { uiText } from "@/i18n/ui";
 
 interface ToggleProps {
   active?: boolean;

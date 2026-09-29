@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { LiveStats } from "@/lib/types";
+import type { LiveStats } from "@/types/hardware";
 
 export type LiveStatus = "connecting" | "live" | "error" | "off";
 

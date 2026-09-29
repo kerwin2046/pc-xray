@@ -1,0 +1,1 @@
+export { XRayApp } from "./XRayApp";

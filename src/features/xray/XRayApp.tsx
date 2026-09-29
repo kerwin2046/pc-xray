@@ -1,18 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { MachineInfo } from "@/lib/types";
-import { listParts, type PartId } from "@/lib/parts";
-import { getInsights } from "@/lib/insights";
-import { LOCALE_COOKIE, LOCALE_TAG, type Locale } from "@/lib/i18n/config";
-import { uiText } from "@/lib/i18n/ui";
-import { SceneCanvas } from "@/components/scene/SceneCanvas";
-import type { SceneState } from "@/components/scene/SceneContext";
-import { useLiveStats } from "@/components/useLiveStats";
-import { DetailPanel } from "@/components/ui/DetailPanel";
-import { LiveHud } from "@/components/ui/LiveHud";
-import { Overview } from "@/components/ui/Overview";
-import { Toolbar } from "@/components/ui/Toolbar";
+import type { MachineInfo } from "@/types/hardware";
+import { listParts, type PartId } from "@/lib/hardware/parts";
+import { getInsights } from "@/lib/hardware/insights";
+import { LOCALE_COOKIE, LOCALE_TAG, type Locale } from "@/i18n/config";
+import { uiText } from "@/i18n/ui";
+import { DetailPanel, LiveHud, Overview, Toolbar } from "./components/panels";
+import { SceneCanvas } from "./components/scene/SceneCanvas";
+import type { SceneState } from "./components/scene/SceneContext";
+import { useLiveStats } from "./hooks/useLiveStats";
 
 function isMachineInfo(value: unknown): value is MachineInfo {
   const v = value as MachineInfo;

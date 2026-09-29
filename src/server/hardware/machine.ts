@@ -1,5 +1,5 @@
 import si from "systeminformation";
-import type { MachineInfo, MemoryModule, PhysicalCore } from "@/lib/types";
+import type { MachineInfo, MemoryModule, PhysicalCore } from "@/types/hardware";
 import { readCpuTopology, readMemoryModules } from "./linux";
 
 const GIB = 1024 ** 3;

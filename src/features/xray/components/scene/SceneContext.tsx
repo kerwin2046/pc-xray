@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { LiveStats, MachineInfo } from "@/lib/types";
-import type { PartId } from "@/lib/parts";
-import type { Locale } from "@/lib/i18n/config";
+import type { LiveStats, MachineInfo } from "@/types/hardware";
+import type { PartId } from "@/lib/hardware/parts";
+import type { Locale } from "@/i18n/config";
 
 export interface SceneState {
   machine: MachineInfo;

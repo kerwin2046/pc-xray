@@ -1,10 +1,10 @@
 "use client";
 
-import type { LiveStats } from "@/lib/types";
+import type { LiveStats } from "@/types/hardware";
 import { formatMem, formatTemp } from "@/lib/format";
-import type { Locale } from "@/lib/i18n/config";
-import { uiText } from "@/lib/i18n/ui";
-import type { LiveStatus } from "@/components/useLiveStats";
+import type { Locale } from "@/i18n/config";
+import { uiText } from "@/i18n/ui";
+import type { LiveStatus } from "@/features/xray/hooks/useLiveStats";
 
 function Sparkline({ values }: { values: number[] }) {
   if (values.length < 2) return <div className="h-6 w-24" />;

@@ -3,15 +3,15 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import { MathUtils, type Group } from "three";
-import type { PhysicalCore } from "@/lib/types";
+import type { PhysicalCore } from "@/types/hardware";
 import { formatGHz, formatTemp } from "@/lib/format";
-import { detailText } from "@/lib/i18n/detail";
-import { uiText } from "@/lib/i18n/ui";
-import { CORE_COLOR, PALETTE, REAL } from "./colors";
-import { inRects, rng, Scatter, type Box } from "./detail";
-import { Label } from "./Label";
-import { Part, PartMaterial, usePart } from "./Part";
-import { useScene } from "./SceneContext";
+import { detailText } from "@/i18n/detail";
+import { uiText } from "@/i18n/ui";
+import { CORE_COLOR, PALETTE, REAL } from "../colors";
+import { inRects, rng, Scatter, type Box } from "../primitives";
+import { Label } from "../Label";
+import { Part, PartMaterial, usePart } from "../Part";
+import { useScene } from "../SceneContext";
 
 const P = { w: 0.075, d: 0.09 };
 const E = { w: 0.032, d: 0.04 };

@@ -5,13 +5,13 @@ import { useFrame } from "@react-three/fiber";
 import { Edges } from "@react-three/drei";
 import { MathUtils, type Group } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import type { MachineInfo } from "@/lib/types";
-import { gpuName } from "@/lib/parts";
+import type { MachineInfo } from "@/types/hardware";
+import { gpuName } from "@/lib/hardware/parts";
 import { formatDisk, formatMem } from "@/lib/format";
-import { PALETTE, REAL } from "./colors";
-import { Decal, FONT, makeTexture, MONO, Scatter, useDispose, type Box } from "./detail";
-import { GhostMaterial, PartMaterial } from "./Part";
-import { useScene } from "./SceneContext";
+import { PALETTE, REAL } from "../colors";
+import { Decal, FONT, makeTexture, MONO, Scatter, useDispose, type Box } from "../primitives";
+import { GhostMaterial, PartMaterial } from "../Part";
+import { useScene } from "../SceneContext";
 
 // ───────────────────────────── Chassis ─────────────────────────────
 

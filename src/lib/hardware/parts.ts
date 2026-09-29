@@ -1,7 +1,7 @@
-import type { CoreKind, LiveStats, MachineInfo } from "@/lib/types";
+import type { CoreKind, LiveStats, MachineInfo } from "@/types/hardware";
 import { formatCache, formatDisk, formatGHz, formatMem, formatPct, formatTemp } from "@/lib/format";
-import type { Locale } from "@/lib/i18n/config";
-import { detailText, formFactorText, type DetailText } from "@/lib/i18n/detail";
+import type { Locale } from "@/i18n/config";
+import { detailText, formFactorText, type DetailText } from "@/i18n/detail";
 
 export type PartId =
   | "board"

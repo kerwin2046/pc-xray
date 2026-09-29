@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { getMachineInfo } from "@/lib/collect/machine";
-import { requestLocale } from "@/lib/i18n/server";
-import { uiText } from "@/lib/i18n/ui";
-import { XRayApp } from "@/components/XRayApp";
+import { XRayApp } from "@/features/xray";
+import { requestLocale } from "@/i18n/server";
+import { uiText } from "@/i18n/ui";
+import { getMachineInfo } from "@/server/hardware/machine";
 
 export async function generateMetadata({ searchParams }: PageProps<"/">): Promise<Metadata> {
   const { meta } = uiText(await requestLocale((await searchParams).lang));

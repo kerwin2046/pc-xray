@@ -1,4 +1,4 @@
-import type { CoreKind } from "@/lib/types";
+import type { CoreKind } from "@/types/hardware";
 import type { Locale } from "./config";
 
 const en = {
