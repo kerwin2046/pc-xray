@@ -1,64 +1,233 @@
-# PC·XRAY · 透视你的电脑
+<div align="center">
 
-读取本机真实硬件信息，用可交互的 3D 透视模型展示电脑内部结构：CPU 的每个核心、内存条、固态硬盘、散热、电池……点一下就能看到它是什么、参数多少、现在状态如何。
+# PC·XRAY
 
-## 运行
+**See inside your computer.**
+
+Reads your machine's real hardware and renders it as an interactive 3D cutaway —
+every CPU core, memory module, SSD, heat pipe, and battery cell. Click any part
+to learn what it is, what it's rated for, and what it's doing right now.
+
+[![CI](https://github.com/kerwin2046/pc-xray/actions/workflows/ci.yml/badge.svg)](https://github.com/kerwin2046/pc-xray/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+
+English · [简体中文](README.zh-CN.md)
+
+</div>
+
+---
+
+## What it is
+
+Most hardware tools give you a table of numbers. PC·XRAY gives you the machine.
+
+It reads the same data those tools read — CPU topology from sysfs, DDR5 details
+straight off the SPD EEPROM, temperatures from hwmon — and then builds a
+physically arranged 3D model from it. Sixteen cores means sixteen cores on the
+die, laid out by class. Two DIMMs means two sticks in their sockets, with the
+right number of DRAM packages on each. The fan spins at the RPM your fan is
+actually spinning at.
+
+Then it explains itself. Click the CPU and you get a plain-language account of
+why your P-cores and E-cores exist and which ones are busy. Click the memory and
+you get the dual-channel bandwidth arithmetic worked out. Click the battery and
+you get its real health against its design capacity.
+
+It runs entirely on your own machine, binds to loopback only, and never phones
+home.
+
+## Highlights
+
+**Real data, not a mock-up.** Core count, core classes, cache sizes, module
+density, disk firmware revisions, battery cycle count — all read from the
+hardware. Values that must be estimated are labelled as estimates.
+
+**Live telemetry.** Refreshes every 2 seconds: per-core load and frequency,
+per-core temperature, memory pressure, fan RPM, battery state. Core brightness
+tracks load; the fan spins at its measured speed.
+
+**Two visual styles.** A clean schematic mode, and a realistic mode (`V`) with
+PBR materials, procedurally generated PCB silkscreen, memory gold fingers and
+DRAM markings, and SSD, battery, and Wi-Fi labels printed with your actual
+hardware strings.
+
+**Exploded view** (`E`) separates the layers and splits the SoC into its compute,
+graphics, and I/O tiles.
+
+**Thermal view** (`T`) recolours every part by its live temperature.
+
+**Plain-language explanations** generated from your data, not canned text:
+big.LITTLE core division, channel bandwidth, battery wear, thermal headroom.
+
+**Whole-machine diagnostics.** Memory pressure, swap usage, CPU temperature,
+single- versus dual-channel, battery ageing, disk capacity.
+
+**Snapshots.** Export your machine as JSON and import someone else's to inspect
+it. Snapshots carry no serial numbers, MAC addresses, IP addresses, or UUIDs.
+
+**Bilingual.** English by default, Chinese one click away, switched instantly
+without a reload.
+
+## Quick start
+
+**Requirements:** Node.js >= 20.9, pnpm 11, a WebGL2-capable browser.
 
 ```bash
+git clone https://github.com/kerwin2046/pc-xray.git
+cd pc-xray
+corepack enable
 pnpm install
-pnpm dev          # http://127.0.0.1:3000
+pnpm dev
 ```
 
-服务只监听 `127.0.0.1`，硬件信息不会暴露到局域网。
+Open <http://127.0.0.1:3000>.
 
-其他命令：
+The dev and production servers bind to `127.0.0.1`, so your hardware details are
+never exposed to the local network.
+
+## Usage
+
+### Keyboard
+
+| Key   | Action                           |
+| ----- | -------------------------------- |
+| `V`   | Toggle realistic materials       |
+| `E`   | Toggle exploded view             |
+| `T`   | Toggle thermal view              |
+| `L`   | Toggle labels                    |
+| `R`   | Reset camera and clear selection |
+| `Esc` | Clear selection                  |
+
+Drag to orbit, scroll to zoom, click a part to select it.
+
+### Deep links
+
+Every view is addressable, so you can link someone straight to what you're
+talking about:
+
+```
+/?part=cpu&exploded=1&heat=1&labels=0&style=real&lang=en
+```
+
+| Parameter  | Values                                                                          | Default           |
+| ---------- | ------------------------------------------------------------------------------- | ----------------- |
+| `part`     | `board` `cpu` `gpu` `ram-0` `ssd-0` `battery` `cooling` `wifi` `display` `input` | none selected     |
+| `exploded` | `1`                                                                             | off               |
+| `heat`     | `1`                                                                             | off               |
+| `labels`   | `0` to hide                                                                     | shown             |
+| `style`    | `real`                                                                          | schematic         |
+| `lang`     | `en` `zh`                                                                       | cookie, else `en` |
+
+`lang` takes precedence over the saved `pcx-locale` cookie.
+
+### Snapshots
 
 ```bash
-pnpm snapshot [out.json]   # 导出本机硬件快照（默认 snapshot.json）
-pnpm build && pnpm start   # 生产模式
-pnpm typecheck && pnpm lint
+pnpm snapshot                 # writes snapshot.json
+pnpm snapshot my-laptop.json  # or a path of your choosing
 ```
 
-## 功能
+You can also export from the toolbar. Import a snapshot to view another
+machine's hardware in full 3D; live polling switches off while you do, and the
+toolbar shows which snapshot you're looking at.
 
-- **3D 透视模型**：玻璃外壳 + 主板、SoC（P / E / LP-E 核按真实拓扑排布）、核显、内存、SSD、无线网卡、电池、热管风扇。
-- **爆炸视图**（`E`）：各层分开展示，CPU 的计算模块 / 核显 / SoC 模块会分离。
-- **温度视图**（`T`）：部件按实时温度着色（蓝 → 绿 → 红）。
-- **实时数据**：每 2 秒刷新负载、每核频率与温度、内存占用、风扇转速、电池。核心亮度随负载变化，风扇按真实转速旋转。
-- **通俗讲解**：每个部件的说明都由真实数据生成（例如大小核分工、双通道带宽计算、电池健康度）。
-- **整机诊断**：内存压力、交换空间、CPU 温度、单/双通道、电池老化、磁盘空间。
-- **快照导入 / 导出**：可以把别人的 `snapshot.json` 导入查看。导出前已去除序列号、MAC、IP、UUID。
+## HTTP API
 
-- **真实外观**（`V`）：PBR 材质 + 本地生成的环境反射与阴影；主板丝印与贴片元件、内存金手指与颗粒丝印、SSD/电池/网卡贴纸（文字来自真实数据）、热管风扇、键盘与屏幕都做了细节。
-- **中英双语**：默认英文，工具栏右侧 `EN / 中文` 切换，即时生效，选择记在 `pcx-locale` cookie 里。
+Both endpoints are local, unauthenticated, and return JSON.
 
-快捷键：`V` 真实外观 · `E` 爆炸视图 · `T` 温度视图 · `L` 标签 · `R` 重置视角 · `Esc` 取消选择。
+| Endpoint       | Description                      | Caching          |
+| -------------- | -------------------------------- | ---------------- |
+| `/api/machine` | Static inventory (`MachineInfo`) | 60 s server-side |
+| `/api/live`    | Sampled telemetry (`LiveStats`)  | `no-store`       |
 
-### 深链接
+Response shapes are defined in [`src/types/hardware.ts`](src/types/hardware.ts).
+
+## How it reads your hardware
+
+`systeminformation` provides the cross-platform baseline. On Linux, PC·XRAY
+reads considerably deeper — all from world-readable paths, with **no root
+required**:
+
+- **CPU topology** from `/sys/devices/cpu_core` and `/sys/devices/cpu_atom`,
+  which is how P, E, and LP-E cores are told apart and mapped to logical CPUs.
+- **Memory details** decoded from the SPD EEPROM exposed by the `spd5118`
+  driver: DDR generation, speed grade, die density, and I/O width per module.
+- **Sensors** from `hwmon`: per-core and package temperature, SSD and Wi-Fi
+  temperature, fan RPM.
+
+## Platform support
+
+| Platform | Status                 | Notes                                                  |
+| -------- | ---------------------- | ------------------------------------------------------ |
+| Linux    | Fully supported        | Core classes, SPD memory details, full sensor coverage |
+| macOS    | Runs, reduced fidelity | No core classification, no SPD data, limited sensors   |
+| Windows  | Runs, reduced fidelity | No core classification, no SPD data, limited sensors   |
+
+On non-Linux platforms the interface degrades honestly: missing values are shown
+as unavailable rather than guessed, and estimated ones are marked.
+
+The 3D layout is a representative laptop arrangement. **Component counts and
+specifications are real; physical positions are illustrative**, not a
+reproduction of your specific chassis.
+
+## Privacy
+
+Identifying data is excluded at the point of collection, not stripped after the
+fact. The collector requests an explicit list of fields from
+`systeminformation`, and serial numbers, MAC addresses, IP addresses, and
+hardware UUIDs are never among them. Virtual and container network interfaces
+are filtered out by name.
+
+What a snapshot **does** include: your OS hostname, distribution, kernel
+version, and disk model names. Glance over it before sharing publicly.
+
+Nothing is sent anywhere. There is no telemetry, no analytics, and no outbound
+request of any kind.
+
+## Scripts
+
+| Command          | Description                               |
+| ---------------- | ----------------------------------------- |
+| `pnpm dev`       | Development server on `127.0.0.1:3000`    |
+| `pnpm build`     | Production build                          |
+| `pnpm start`     | Serve the production build on `127.0.0.1` |
+| `pnpm typecheck` | `tsc --noEmit`                            |
+| `pnpm lint`      | ESLint                                    |
+| `pnpm snapshot`  | Write a hardware snapshot to JSON         |
+
+## Tech stack
+
+Next.js 16 (App Router, React Server Components) · React 19 · TypeScript 5 in
+strict mode · React Three Fiber 9 and drei 10 on three.js · Tailwind CSS 4 ·
+`systeminformation` plus custom Linux sysfs collectors.
+
+## Project structure
 
 ```
-/?part=cpu&exploded=1&heat=1&labels=0&style=real&lang=zh
+src/
+├── app/          Routing layer: pages and API routes (thin by design)
+├── features/     Feature modules — currently the single xray feature
+├── server/       Server-only hardware collectors; never bundled for the browser
+├── lib/          Pure domain logic and formatting
+├── i18n/         Locale configuration and all user-visible strings
+└── types/        Shared type definitions, imported by everything
 ```
 
-`part` 可选 `board` `cpu` `gpu` `ram-0` `ssd-0` `battery` `cooling` `wifi` `display` `input`。`lang` 可选 `en` `zh`，优先于 cookie。
+Dependencies flow downward only, and `src/features` may never import
+`src/server`. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full
+layer graph, data flow, and the reasoning behind each decision.
 
-## 结构
+## Contributing
 
-```
-src/lib/collect/     硬件采集（systeminformation + Linux sysfs/hwmon/SPD）
-  machine.ts         静态信息，缓存 60s  → GET /api/machine
-  live.ts            实时数据            → GET /api/live
-  linux.ts           CPU 拓扑、hwmon 传感器、DDR5 SPD 解码
-src/lib/parts.ts     部件列表与讲解逻辑
-src/lib/insights.ts  整机诊断规则
-src/lib/i18n/        语言配置；ui.ts 界面文案，detail.ts 讲解与诊断文案（en / zh）
-src/components/scene 3D 场景（React Three Fiber + drei）
-src/components/ui    HUD、工具栏、概览、详情面板
-scripts/snapshot.mts 命令行快照
-```
+Contributions are welcome — particularly hardware reports from machines we
+haven't seen. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md), and please read
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before making structural changes.
 
-## 平台说明
+For security issues, follow [`SECURITY.md`](SECURITY.md) rather than opening a
+public issue.
 
-- 为 Linux 优化：CPU 拓扑读取 `/sys/devices/cpu_*`，内存频率与颗粒从 `spd5118` 驱动的 SPD EEPROM 解码（无需 root）。
-- Windows / macOS 可以运行（依靠 systeminformation），但核心分类、内存细节和部分传感器会缺失或靠估算。
-- 3D 布局是按笔记本通用结构绘制的示意图，部件数量和参数是真实的，位置不是该机型的精确还原。
+## License
+
+[MIT](LICENSE) © kerwin2046
