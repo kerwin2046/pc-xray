@@ -66,7 +66,7 @@ MAC 地址、IP 地址和 UUID。
 
 ## 快速开始
 
-**环境要求：** Node.js >= 20.9、pnpm 11、支持 WebGL2 的浏览器。
+**环境要求：** Node.js >= 22.13、pnpm 11、支持 WebGL2 的浏览器。
 
 ```bash
 git clone https://github.com/kerwin2046/pc-xray.git

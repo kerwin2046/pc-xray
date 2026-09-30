@@ -18,7 +18,7 @@ pnpm dev                 # http://127.0.0.1:3000
 
 Requirements:
 
-- Node.js >= 20.9 (see [`.nvmrc`](.nvmrc))
+- Node.js >= 22.13 (see [`.nvmrc`](.nvmrc))
 - pnpm 11 (pinned via the `packageManager` field; `corepack enable` is enough)
 - Linux for the full feature set. macOS and Windows build and run, but several
   collectors degrade to estimates — see [Platform support](README.md#platform-support).
