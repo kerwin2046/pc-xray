@@ -32,6 +32,7 @@
     "build": "next build",
     "start": "next start -H 127.0.0.1",
     "lint": "eslint",
+    "typegen": "next typegen",
     "typecheck": "tsc --noEmit",
     "snapshot": "tsx scripts/snapshot.mts"
   },
