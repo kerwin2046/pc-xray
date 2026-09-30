@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [20, 22]
+        node: [22, 24]
 
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +35,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Next.js route types
+        run: pnpm typegen
 
       - name: Typecheck
         run: pnpm typecheck

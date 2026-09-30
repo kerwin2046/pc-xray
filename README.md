@@ -76,7 +76,7 @@ without a reload.
 
 ## Quick start
 
-**Requirements:** Node.js >= 20.9, pnpm 11, a WebGL2-capable browser.
+**Requirements:** Node.js >= 22.13, pnpm 11, a WebGL2-capable browser.
 
 ```bash
 git clone https://github.com/kerwin2046/pc-xray.git
